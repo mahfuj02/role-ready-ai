@@ -1,6 +1,6 @@
 import { QuestionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { detectStar, evaluateAnswer } from "@/lib/ai/answer-evaluator";
+import { detectStarWithSource, evaluateAnswerWithSource } from "@/lib/ai/answer-evaluator";
 
 type SubmitPracticeAnswerInput = {
   email: string;
@@ -47,7 +47,7 @@ export async function submitPracticeAnswer(input: SubmitPracticeAnswerInput): Pr
   }
 
   const trimmedAnswer = input.answerText.trim();
-  const evaluation = await evaluateAnswer({
+  const evaluation = await evaluateAnswerWithSource({
     question: question.text,
     questionType: question.type,
     answerText: trimmedAnswer,
@@ -82,61 +82,65 @@ export async function submitPracticeAnswer(input: SubmitPracticeAnswerInput): Pr
   await prisma.feedback.upsert({
     where: { answerId: answer.id },
     update: {
-      relevance: evaluation.scores.relevance,
-      clarity: evaluation.scores.clarity,
-      depth: evaluation.scores.depth,
-      communication: evaluation.scores.communication,
-      relevanceWhy: evaluation.reasons.relevance,
-      clarityWhy: evaluation.reasons.clarity,
-      depthWhy: evaluation.reasons.depth,
-      communicationWhy: evaluation.reasons.communication,
-      tipOne: evaluation.improvementTips[0],
-      tipTwo: evaluation.improvementTips[1],
-      improvedAnswer: evaluation.improvedAnswer,
+      provider: evaluation.provider,
+      relevance: evaluation.result.scores.relevance,
+      clarity: evaluation.result.scores.clarity,
+      depth: evaluation.result.scores.depth,
+      communication: evaluation.result.scores.communication,
+      relevanceWhy: evaluation.result.reasons.relevance,
+      clarityWhy: evaluation.result.reasons.clarity,
+      depthWhy: evaluation.result.reasons.depth,
+      communicationWhy: evaluation.result.reasons.communication,
+      tipOne: evaluation.result.improvementTips[0],
+      tipTwo: evaluation.result.improvementTips[1],
+      improvedAnswer: evaluation.result.improvedAnswer,
     },
     create: {
       answerId: answer.id,
-      relevance: evaluation.scores.relevance,
-      clarity: evaluation.scores.clarity,
-      depth: evaluation.scores.depth,
-      communication: evaluation.scores.communication,
-      relevanceWhy: evaluation.reasons.relevance,
-      clarityWhy: evaluation.reasons.clarity,
-      depthWhy: evaluation.reasons.depth,
-      communicationWhy: evaluation.reasons.communication,
-      tipOne: evaluation.improvementTips[0],
-      tipTwo: evaluation.improvementTips[1],
-      improvedAnswer: evaluation.improvedAnswer,
+      provider: evaluation.provider,
+      relevance: evaluation.result.scores.relevance,
+      clarity: evaluation.result.scores.clarity,
+      depth: evaluation.result.scores.depth,
+      communication: evaluation.result.scores.communication,
+      relevanceWhy: evaluation.result.reasons.relevance,
+      clarityWhy: evaluation.result.reasons.clarity,
+      depthWhy: evaluation.result.reasons.depth,
+      communicationWhy: evaluation.result.reasons.communication,
+      tipOne: evaluation.result.improvementTips[0],
+      tipTwo: evaluation.result.improvementTips[1],
+      improvedAnswer: evaluation.result.improvedAnswer,
     },
   });
 
   if (question.type === QuestionType.BEHAVIORAL) {
-    const star = await detectStar(trimmedAnswer, question.text);
+    const star = await detectStarWithSource(trimmedAnswer, question.text);
 
     await prisma.starAnalysis.upsert({
       where: { answerId: answer.id },
       update: {
-        situation: star.situation.present,
-        task: star.task.present,
-        action: star.action.present,
-        result: star.result.present,
-        situationEvidence: star.situation.evidence,
-        taskEvidence: star.task.evidence,
-        actionEvidence: star.action.evidence,
-        resultEvidence: star.result.evidence,
-        coachTip: star.coachTip,
+        provider: star.provider,
+        situation: star.result.situation.present,
+        task: star.result.task.present,
+        action: star.result.action.present,
+        result: star.result.result.present,
+        situationEvidence: star.result.situation.evidence,
+        taskEvidence: star.result.task.evidence,
+        actionEvidence: star.result.action.evidence,
+        resultEvidence: star.result.result.evidence,
+        coachTip: star.result.coachTip,
       },
       create: {
         answerId: answer.id,
-        situation: star.situation.present,
-        task: star.task.present,
-        action: star.action.present,
-        result: star.result.present,
-        situationEvidence: star.situation.evidence,
-        taskEvidence: star.task.evidence,
-        actionEvidence: star.action.evidence,
-        resultEvidence: star.result.evidence,
-        coachTip: star.coachTip,
+        provider: star.provider,
+        situation: star.result.situation.present,
+        task: star.result.task.present,
+        action: star.result.action.present,
+        result: star.result.result.present,
+        situationEvidence: star.result.situation.evidence,
+        taskEvidence: star.result.task.evidence,
+        actionEvidence: star.result.action.evidence,
+        resultEvidence: star.result.result.evidence,
+        coachTip: star.result.coachTip,
       },
     });
   }

@@ -43,6 +43,13 @@ export type EvaluationResult = {
   improvedAnswer: string;
 };
 
+export type AiProviderSource = "GEMINI" | "MOCK";
+
+export type EvaluationWithSource = {
+  provider: AiProviderSource;
+  result: EvaluationResult;
+};
+
 export type StarPart = {
   present: boolean;
   evidence: string;
@@ -55,4 +62,9 @@ export type StarResult = {
   result: StarPart;
   missingParts: Array<"situation" | "task" | "action" | "result">;
   coachTip: string;
+};
+
+export type StarWithSource = {
+  provider: AiProviderSource;
+  result: StarResult;
 };

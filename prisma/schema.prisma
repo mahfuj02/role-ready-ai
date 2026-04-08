@@ -22,6 +22,11 @@ enum Difficulty {
   HARD
 }
 
+enum AiProvider {
+  GEMINI
+  MOCK
+}
+
 model User {
   id            String            @id @default(cuid())
   name          String?
@@ -143,6 +148,7 @@ model Answer {
 model Feedback {
   id             String   @id @default(cuid())
   answerId       String   @unique
+  provider       AiProvider @default(MOCK)
   relevance      Int
   clarity        Int
   depth          Int
@@ -163,6 +169,7 @@ model Feedback {
 model StarAnalysis {
   id             String   @id @default(cuid())
   answerId       String   @unique
+  provider       AiProvider @default(MOCK)
   situation      Boolean
   task           Boolean
   action         Boolean
