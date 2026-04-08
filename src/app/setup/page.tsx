@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
-import { saveSetupProfile } from "./actions";
+import { generatePracticeSession, saveSetupProfile } from "./actions";
 
 type SetupPageProps = {
   searchParams: Promise<{ saved?: string; error?: string }>;
@@ -58,6 +58,12 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Please complete all fields. Resume and job description should be detailed enough for AI
           analysis.
+        </p>
+      )}
+
+      {params.error === "no-setup" && (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Save your setup details first, then generate a practice session.
         </p>
       )}
 
@@ -126,6 +132,15 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
             Go to practice
           </Link>
         </div>
+      </form>
+
+      <form action={generatePracticeSession}>
+        <button
+          type="submit"
+          className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+        >
+          Generate questions from latest setup
+        </button>
       </form>
     </main>
   );

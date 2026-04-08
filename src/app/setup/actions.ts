@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
+import { createPracticeSessionFromLatestSetup } from "@/lib/practice/create-practice-session";
 
 const setupSchema = z.object({
   roleTitle: z.string().trim().min(2).max(120),
@@ -50,4 +51,20 @@ export async function saveSetupProfile(formData: FormData) {
   });
 
   redirect("/setup?saved=1");
+}
+
+export async function generatePracticeSession() {
+  const sessionUser = await requireUser();
+
+  if (!sessionUser.email) {
+    redirect("/sign-in");
+  }
+
+  const generated = await createPracticeSessionFromLatestSetup(sessionUser.email);
+
+  if (!generated) {
+    redirect("/setup?error=no-setup");
+  }
+
+  redirect(`/practice?session=${generated.practiceSessionId}`);
 }
