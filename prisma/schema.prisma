@@ -1,0 +1,179 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum QuestionType {
+  BEHAVIORAL
+  TECHNICAL
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id            String            @id @default(cuid())
+  name          String?
+  email         String?           @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  setupProfiles SetupProfile[]
+  practiceSessions PracticeSession[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model SetupProfile {
+  id                 String   @id @default(cuid())
+  userId             String
+  roleTitle          String
+  seniority          String
+  resumeText         String   @db.Text
+  jobDescriptionText String   @db.Text
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  practiceSessions PracticeSession[]
+
+  @@index([userId, createdAt])
+}
+
+model PracticeSession {
+  id                String   @id @default(cuid())
+  userId            String
+  setupProfileId    String
+  totalQuestions    Int      @default(10)
+  completedAt       DateTime?
+  starCompletionPct Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  setupProfile SetupProfile @relation(fields: [setupProfileId], references: [id], onDelete: Cascade)
+  questions    Question[]
+  answers      Answer[]
+
+  @@index([userId, createdAt])
+}
+
+model Question {
+  id                String       @id @default(cuid())
+  practiceSessionId String
+  position          Int
+  text              String       @db.Text
+  type              QuestionType
+  difficulty        Difficulty
+  starRecommended   Boolean
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  practiceSession PracticeSession @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
+  answers         Answer[]
+
+  @@unique([practiceSessionId, position])
+}
+
+model Answer {
+  id                String   @id @default(cuid())
+  practiceSessionId String
+  questionId        String
+  text              String   @db.Text
+  elapsedSeconds    Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  practiceSession PracticeSession @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
+  question        Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  feedback        Feedback?
+  starAnalysis    StarAnalysis?
+}
+
+model Feedback {
+  id             String   @id @default(cuid())
+  answerId       String   @unique
+  relevance      Int
+  clarity        Int
+  depth          Int
+  communication  Int
+  relevanceWhy   String   @db.Text
+  clarityWhy     String   @db.Text
+  depthWhy       String   @db.Text
+  communicationWhy String @db.Text
+  tipOne         String   @db.Text
+  tipTwo         String   @db.Text
+  improvedAnswer String   @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  answer Answer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+}
+
+model StarAnalysis {
+  id             String   @id @default(cuid())
+  answerId       String   @unique
+  situation      Boolean
+  task           Boolean
+  action         Boolean
+  result         Boolean
+  situationEvidence String @db.Text
+  taskEvidence      String @db.Text
+  actionEvidence    String @db.Text
+  resultEvidence    String @db.Text
+  coachTip       String   @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  answer Answer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+}
