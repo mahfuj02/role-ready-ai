@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { GenerateQuestionsInput, GeneratedQuestion } from "@/lib/ai/types";
-import { extractJsonPayload, GEMINI_DEFAULT_MODEL, getGeminiClient } from "@/lib/ai/gemini-client";
+import { extractJsonPayload, getGeminiClient, getGeminiModel } from "@/lib/ai/gemini-client";
 
 const schema = z.object({
   questions: z
@@ -54,7 +54,7 @@ ${input.jobDescriptionText}
 `;
 
   const response = await client.models.generateContent({
-    model: GEMINI_DEFAULT_MODEL,
+    model: getGeminiModel(),
     contents: prompt,
   });
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { EvaluateAnswerInput, EvaluationResult, StarResult } from "@/lib/ai/types";
-import { extractJsonPayload, GEMINI_DEFAULT_MODEL, getGeminiClient } from "@/lib/ai/gemini-client";
+import { extractJsonPayload, getGeminiClient, getGeminiModel } from "@/lib/ai/gemini-client";
 
 const evalSchema = z.object({
   scores: z.object({
@@ -61,7 +61,7 @@ Job description: ${input.jobDescriptionText}
 `;
 
   const response = await client.models.generateContent({
-    model: GEMINI_DEFAULT_MODEL,
+    model: getGeminiModel(),
     contents: prompt,
   });
 
@@ -107,7 +107,7 @@ Return this schema exactly:
 `;
 
   const response = await client.models.generateContent({
-    model: GEMINI_DEFAULT_MODEL,
+    model: getGeminiModel(),
     contents: prompt,
   });
 
