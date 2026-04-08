@@ -12,3 +12,47 @@ export type GenerateQuestionsInput = {
   jobDescriptionText: string;
   totalQuestions?: number;
 };
+
+export type EvaluateAnswerInput = {
+  question: string;
+  questionType: "BEHAVIORAL" | "TECHNICAL";
+  answerText: string;
+  roleTitle: string;
+  resumeText: string;
+  jobDescriptionText: string;
+};
+
+export type EvaluationScores = {
+  relevance: number;
+  clarity: number;
+  depth: number;
+  communication: number;
+};
+
+export type EvaluationReasons = {
+  relevance: string;
+  clarity: string;
+  depth: string;
+  communication: string;
+};
+
+export type EvaluationResult = {
+  scores: EvaluationScores;
+  reasons: EvaluationReasons;
+  improvementTips: [string, string];
+  improvedAnswer: string;
+};
+
+export type StarPart = {
+  present: boolean;
+  evidence: string;
+};
+
+export type StarResult = {
+  situation: StarPart;
+  task: StarPart;
+  action: StarPart;
+  result: StarPart;
+  missingParts: Array<"situation" | "task" | "action" | "result">;
+  coachTip: string;
+};

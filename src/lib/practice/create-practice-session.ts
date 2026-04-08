@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { generateMockQuestions } from "@/lib/ai/mock-question-generator";
+import { generateQuestions } from "@/lib/ai/question-generator";
 
 export type CreatePracticeSessionResult = {
   practiceSessionId: string;
@@ -27,7 +27,7 @@ export async function createPracticeSessionFromLatestSetup(
     return null;
   }
 
-  const generated = generateMockQuestions({
+  const generated = await generateQuestions({
     roleTitle: latestSetup.roleTitle,
     seniority: latestSetup.seniority,
     resumeText: latestSetup.resumeText,
