@@ -1,6 +1,15 @@
 import { requireUser } from "@/lib/require-user";
 import { getDashboardDataAction } from "@/lib/dashboard/actions";
 
+function formatDate(date: string | Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    timeZone: "UTC",
+  }).format(new Date(date));
+}
+
 export default async function DashboardPage() {
   await requireUser();
   const dashboardData = await getDashboardDataAction();
@@ -172,7 +181,7 @@ export default async function DashboardPage() {
           ) : (
             dashboardData.recentSessions.map((session) => (
               <div key={session.id} className="flex items-center justify-between rounded border border-slate-200 p-3 text-sm">
-                <span className="text-slate-600">{session.createdAt.toLocaleDateString()}</span>
+                <span className="text-slate-600">{formatDate(session.createdAt)}</span>
                 <span>
                   {session.completedCount}/{session.questionCount} completed
                 </span>

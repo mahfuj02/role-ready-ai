@@ -3,6 +3,15 @@ import { auth, signIn, signOut } from "@/auth";
 import { getUserJobs, setCurrentJob } from "@/lib/jobs/actions";
 import { redirect } from "next/navigation";
 
+function formatDate(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 export default async function Home() {
   const session = await auth();
 
@@ -120,45 +129,59 @@ function JobCard({
   }
 
   return (
-    <form action={handleSelectJob}>
-      <button
-        type="submit"
-        className="w-full rounded-lg border border-slate-200 p-4 text-left transition hover:border-teal-300 hover:bg-teal-50"
-      >
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h3 className="font-semibold text-slate-900">{job.name}</h3>
-            {job.setupProfile && (
-              <p className="mt-1 text-sm text-slate-600">
-                {job.setupProfile.roleTitle} • {job.setupProfile.seniority}
-              </p>
-            )}
-            {job.description && (
-              <p className="mt-2 text-sm text-slate-600">{job.description}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
-          <div>
-            <div className="text-slate-900 font-semibold">{job.sessionCount}</div>
-            <div>Sessions</div>
-          </div>
-          <div>
-            <div className="text-slate-900 font-semibold">{job.totalQuestionsAttempted}</div>
-            <div>Questions</div>
-          </div>
-          {job.lastPracticedAt && (
-            <div>
-              <div className="text-slate-900 font-semibold">
-                {job.lastPracticedAt.toLocaleDateString()}
-              </div>
-              <div>Last Practice</div>
+    <article className="rounded-lg border border-slate-200 p-4 transition hover:border-teal-300 hover:bg-teal-50">
+      <form action={handleSelectJob}>
+        <button type="submit" className="w-full text-left">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="font-semibold text-slate-900">{job.name}</h3>
+              {job.setupProfile && (
+                <p className="mt-1 text-sm text-slate-600">
+                  {job.setupProfile.roleTitle} • {job.setupProfile.seniority}
+                </p>
+              )}
+              {job.description && (
+                <p className="mt-2 text-sm text-slate-600">{job.description}</p>
+              )}
             </div>
-          )}
-        </div>
-      </button>
-    </form>
+          </div>
+
+          {/* Stats */}
+          <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
+            <div>
+              <div className="font-semibold text-slate-900">{job.sessionCount}</div>
+              <div>Sessions</div>
+            </div>
+            <div>
+              <div className="font-semibold text-slate-900">{job.totalQuestionsAttempted}</div>
+              <div>Questions</div>
+            </div>
+            {job.lastPracticedAt && (
+              <div>
+                <div className="font-semibold text-slate-900">
+                  {formatDate(job.lastPracticedAt)}
+                </div>
+                <div>Last Practice</div>
+              </div>
+            )}
+          </div>
+        </button>
+      </form>
+
+      <div className="mt-4 flex flex-wrap gap-3 border-t border-slate-200 pt-4 text-sm">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-800 transition hover:bg-slate-50"
+        >
+          Dashboard
+        </Link>
+        <Link
+          href="/feedback"
+          className="inline-flex items-center justify-center rounded-lg border border-teal-300 bg-teal-50 px-4 py-2 font-medium text-teal-900 transition hover:bg-teal-100"
+        >
+          Feedback
+        </Link>
+      </div>
+    </article>
   );
 }

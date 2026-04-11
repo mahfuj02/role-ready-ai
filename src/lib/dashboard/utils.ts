@@ -15,17 +15,15 @@ import type {
  */
 export async function getDashboardStats(userId: string, jobId: string): Promise<DashboardStats> {
   const sessions = await prisma.practiceSession.findMany({
- export async function getRecentSessions(
-   userId: string,
+    where: { userId, jobId },
     include: {
-   ): Promise<RecentSession[]> {
+      answers: {
         include: { feedback: true },
       },
     },
   });
 
   const totalSessions = sessions.length;
-
   let totalScore = 0;
   let totalFeedbacks = 0;
   let totalQuestionsAttempted = 0;
@@ -47,15 +45,14 @@ export async function getDashboardStats(userId: string, jobId: string): Promise<
   });
 
   const averageScore = totalFeedbacks > 0 ? totalScore / totalFeedbacks : 0;
+  let currentStreak = 0;
 
-  // Calculate current streak (days with practice)
   const streakDays = new Set<string>();
   sessions.forEach((session) => {
     const dateStr = session.createdAt.toISOString().split("T")[0];
     streakDays.add(dateStr);
   });
 
-  let currentStreak = 0;
   if (streakDays.size > 0) {
     const sortedDates = Array.from(streakDays).sort().reverse();
     const today = new Date().toISOString().split("T")[0];
@@ -85,14 +82,12 @@ export async function getDashboardStats(userId: string, jobId: string): Promise<
 }
 
 /**
- * Get recent practice sessions (last 5-10)
+ * Get recent practice sessions for a specific job
  */
-export async function getRecentSessions(userId: string): Promise<RecentSession[]> {
-   jobId: string,
- export async function getScoreTrends(
-   userId: string,
-     where: { userId, jobId },
-   ): Promise<ScoreTrend[]> {
+export async function getRecentSessions(userId: string, jobId: string): Promise<RecentSession[]> {
+  const sessions = await prisma.practiceSession.findMany({
+    where: { userId, jobId },
+    include: {
       answers: {
         include: { feedback: true },
       },
@@ -129,17 +124,15 @@ export async function getRecentSessions(userId: string): Promise<RecentSession[]
 }
 
 /**
- * Get score trends for last 30 days
+ * Get score trends for a specific job
  */
-export async function getScoreTrends(userId: string): Promise<ScoreTrend[]> {
-   jobId: string,
- export async function getPerformanceByType(
-   userId: string,
+export async function getScoreTrends(userId: string, jobId: string): Promise<ScoreTrend[]> {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-   ): Promise<PerformanceByType[]> {
+  const sessions = await prisma.practiceSession.findMany({
     where: {
       userId,
-       jobId,
+      jobId,
       createdAt: { gte: thirtyDaysAgo },
     },
     include: {
@@ -185,14 +178,12 @@ export async function getScoreTrends(userId: string): Promise<ScoreTrend[]> {
 }
 
 /**
- * Get performance breakdown by question type
+ * Get performance breakdown by question type for a specific job
  */
-export async function getPerformanceByType(userId: string): Promise<PerformanceByType[]> {
-   jobId: string,
- export async function getScoreBreakdown(
-   userId: string,
+export async function getPerformanceByType(userId: string, jobId: string): Promise<PerformanceByType[]> {
+  const questions = await prisma.question.findMany({
     where: {
-   ): Promise<ScoreBreakdown> {
+      practiceSession: { userId, jobId },
     },
     include: {
       answers: {
@@ -243,15 +234,13 @@ export async function getPerformanceByType(userId: string): Promise<PerformanceB
 }
 
 /**
- * Get overall score breakdown
+ * Get overall score breakdown for a specific job
  */
-export async function getScoreBreakdown(userId: string): Promise<ScoreBreakdown> {
-   jobId: string,
- export async function getStarCompletion(
-   userId: string,
+export async function getScoreBreakdown(userId: string, jobId: string): Promise<ScoreBreakdown> {
+  const feedbacks = await prisma.feedback.findMany({
     where: {
-   ): Promise<StarCompletion> {
-         practiceSession: { userId, jobId },
+      answer: {
+        practiceSession: { userId, jobId },
       },
     },
   });
@@ -274,16 +263,14 @@ export async function getScoreBreakdown(userId: string): Promise<ScoreBreakdown>
 }
 
 /**
- * Get STAR completion metrics
+ * Get STAR completion metrics for a specific job
  */
-export async function getStarCompletion(userId: string): Promise<StarCompletion> {
-   jobId: string,
- export async function getTopCoachingTips(
-   userId: string,
+export async function getStarCompletion(userId: string, jobId: string): Promise<StarCompletion> {
+  const starAnalyses = await prisma.starAnalysis.findMany({
     where: {
-   limit = 5,
-   ): Promise<TopCoachingTip[]> {
-           practiceSession: { userId, jobId },
+      answer: {
+        question: {
+          practiceSession: { userId, jobId },
         },
       },
     },
@@ -322,15 +309,18 @@ export async function getStarCompletion(userId: string): Promise<StarCompletion>
 }
 
 /**
- * Get top coaching tips
+ * Get top coaching tips for a specific job
  */
-export async function getTopCoachingTips(userId: string, limit = 5): Promise<TopCoachingTip[]> {
-   jobId: string,
+export async function getTopCoachingTips(
+  userId: string,
+  jobId: string,
+  limit = 5
+): Promise<TopCoachingTip[]> {
   const starAnalyses = await prisma.starAnalysis.findMany({
     where: {
       answer: {
         question: {
-           practiceSession: { userId, jobId },
+          practiceSession: { userId, jobId },
         },
       },
     },
@@ -359,15 +349,14 @@ export async function getTopCoachingTips(userId: string, limit = 5): Promise<Top
 }
 
 /**
- * Get weakest score category
+ * Get weakest score category for a specific job
  */
 export async function getWeakestCategory(
-   userId: string,
-   jobId: string,
-   ): Promise<{ category: "relevance" | "clarity" | "depth" | "communication"; score: number }> {
-  const breakdown = await getScoreBreakdown(userId);
+  userId: string,
+  jobId: string
+): Promise<{ category: "relevance" | "clarity" | "depth" | "communication"; score: number }> {
+  const breakdown = await getScoreBreakdown(userId, jobId);
 
-   jobId: string,
   const categories = [
     { category: "relevance" as const, score: breakdown.relevance },
     { category: "clarity" as const, score: breakdown.clarity },
@@ -381,13 +370,9 @@ export async function getWeakestCategory(
 }
 
 /**
- * Get complete dashboard data
+ * Get complete dashboard data for a specific job
  */
- export async function getDashboardData(
-   userId: string,
-   jobId: string,
-   ): Promise<DashboardData> {
-   jobId: string,
+export async function getDashboardData(userId: string, jobId: string): Promise<DashboardData> {
   const [
     stats,
     recentSessions,
@@ -398,14 +383,14 @@ export async function getWeakestCategory(
     topCoachingTips,
     weakestCategory,
   ] = await Promise.all([
-     getDashboardStats(userId, jobId),
-     getRecentSessions(userId, jobId),
-     getScoreTrends(userId, jobId),
-     getPerformanceByType(userId, jobId),
-     getScoreBreakdown(userId, jobId),
-     getStarCompletion(userId, jobId),
-     getTopCoachingTips(userId, jobId),
-     getWeakestCategory(userId, jobId),
+    getDashboardStats(userId, jobId),
+    getRecentSessions(userId, jobId),
+    getScoreTrends(userId, jobId),
+    getPerformanceByType(userId, jobId),
+    getScoreBreakdown(userId, jobId),
+    getStarCompletion(userId, jobId),
+    getTopCoachingTips(userId, jobId),
+    getWeakestCategory(userId, jobId),
   ]);
 
   return {

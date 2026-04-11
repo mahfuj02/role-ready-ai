@@ -66,7 +66,7 @@ export default function NewJobPage() {
             disabled={loading}
           />
           <p className="mt-1 text-xs text-slate-500">
-            Example: "Product Manager at Meta", "SWE at Amazon"
+            Example: &quot;Product Manager at Meta&quot;, &quot;SWE at Amazon&quot;
           </p>
         </div>
 
