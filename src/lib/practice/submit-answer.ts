@@ -80,6 +80,10 @@ export async function submitPracticeAnswer(input: SubmitPracticeAnswerInput): Pr
         },
       });
 
+  const tips = evaluation.result.improvementTips;
+  const tipOne = tips[0] || "Keep practicing this type of question.";
+  const tipTwo = tips[1] || "Focus on areas for continued improvement.";
+
   await prisma.feedback.upsert({
     where: { answerId: answer.id },
     update: {
@@ -92,8 +96,8 @@ export async function submitPracticeAnswer(input: SubmitPracticeAnswerInput): Pr
       clarityWhy: evaluation.result.reasons.clarity,
       depthWhy: evaluation.result.reasons.depth,
       communicationWhy: evaluation.result.reasons.communication,
-      tipOne: evaluation.result.improvementTips[0],
-      tipTwo: evaluation.result.improvementTips[1],
+      tipOne,
+      tipTwo,
       improvedAnswer: evaluation.result.improvedAnswer,
     },
     create: {
@@ -107,8 +111,8 @@ export async function submitPracticeAnswer(input: SubmitPracticeAnswerInput): Pr
       clarityWhy: evaluation.result.reasons.clarity,
       depthWhy: evaluation.result.reasons.depth,
       communicationWhy: evaluation.result.reasons.communication,
-      tipOne: evaluation.result.improvementTips[0],
-      tipTwo: evaluation.result.improvementTips[1],
+      tipOne,
+      tipTwo,
       improvedAnswer: evaluation.result.improvedAnswer,
     },
   });

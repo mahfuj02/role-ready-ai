@@ -39,7 +39,7 @@ export type EvaluationReasons = {
 export type EvaluationResult = {
   scores: EvaluationScores;
   reasons: EvaluationReasons;
-  improvementTips: [string, string];
+  improvementTips: string[];
   improvedAnswer: string;
   star?: StarResult;
 };

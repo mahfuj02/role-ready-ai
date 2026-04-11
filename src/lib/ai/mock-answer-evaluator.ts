@@ -60,7 +60,7 @@ export function evaluateMockAnswer(input: EvaluateAnswerInput): EvaluationResult
         : "Improve communication by tightening wording and emphasizing impact.",
   };
 
-  const improvementTips: [string, string] = [
+  const improvementTips: string[] = [
     "Add one concrete metric or measurable result to strengthen credibility.",
     "Use a tighter structure: context, action, and impact in 3-4 concise sentences.",
   ];
