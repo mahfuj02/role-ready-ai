@@ -2,6 +2,15 @@ import { z } from "zod";
 import type { EvaluateAnswerInput, EvaluationResult, StarResult } from "@/lib/ai/types";
 import { extractJsonPayload, getGeminiClient, getGeminiModel } from "@/lib/ai/gemini-client";
 
+const starSchema = z.object({
+  situation: z.object({ present: z.boolean(), evidence: z.string() }),
+  task: z.object({ present: z.boolean(), evidence: z.string() }),
+  action: z.object({ present: z.boolean(), evidence: z.string() }),
+  result: z.object({ present: z.boolean(), evidence: z.string() }),
+  missingParts: z.array(z.enum(["situation", "task", "action", "result"])),
+  coachTip: z.string().min(3),
+});
+
 const evalSchema = z.object({
   scores: z.object({
     relevance: z.number().min(0).max(5),
@@ -17,15 +26,7 @@ const evalSchema = z.object({
   }),
   improvementTips: z.tuple([z.string().min(3), z.string().min(3)]),
   improvedAnswer: z.string().min(10),
-});
-
-const starSchema = z.object({
-  situation: z.object({ present: z.boolean(), evidence: z.string() }),
-  task: z.object({ present: z.boolean(), evidence: z.string() }),
-  action: z.object({ present: z.boolean(), evidence: z.string() }),
-  result: z.object({ present: z.boolean(), evidence: z.string() }),
-  missingParts: z.array(z.enum(["situation", "task", "action", "result"])),
-  coachTip: z.string().min(3),
+  star: starSchema.optional(),
 });
 
 export async function evaluateGeminiAnswer(input: EvaluateAnswerInput): Promise<EvaluationResult> {
@@ -44,12 +45,22 @@ Score the answer from 0 to 5 for:
 - depth
 - communication
 
+If the question is behavioral, also analyze STAR structure.
+
 Return this schema exactly:
 {
   "scores": {"relevance": 0, "clarity": 0, "depth": 0, "communication": 0},
   "reasons": {"relevance": "...", "clarity": "...", "depth": "...", "communication": "..."},
   "improvementTips": ["...", "..."],
-  "improvedAnswer": "..."
+  "improvedAnswer": "...",
+  "star": {
+    "situation": {"present": true, "evidence": "..."},
+    "task": {"present": true, "evidence": "..."},
+    "action": {"present": true, "evidence": "..."},
+    "result": {"present": true, "evidence": "..."},
+    "missingParts": ["task"],
+    "coachTip": "..."
+  }
 }
 
 Role: ${input.roleTitle}
@@ -58,6 +69,7 @@ Question: ${input.question}
 Candidate answer: ${input.answerText}
 Resume: ${input.resumeText}
 Job description: ${input.jobDescriptionText}
+${input.questionType === "BEHAVIORAL" ? "This is a behavioral question. Fill the star object too." : "This is a technical question. Omit star or return an empty star object if needed."}
 `;
 
   const response = await client.models.generateContent({
@@ -79,6 +91,7 @@ Job description: ${input.jobDescriptionText}
     reasons: parsed.reasons,
     improvementTips: parsed.improvementTips,
     improvedAnswer: parsed.improvedAnswer,
+    star: parsed.star,
   };
 }
 

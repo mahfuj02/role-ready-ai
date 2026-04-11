@@ -41,6 +41,7 @@ export type EvaluationResult = {
   reasons: EvaluationReasons;
   improvementTips: [string, string];
   improvedAnswer: string;
+  star?: StarResult;
 };
 
 export type AiProviderSource = "GEMINI" | "MOCK";

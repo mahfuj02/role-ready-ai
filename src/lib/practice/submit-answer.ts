@@ -1,6 +1,7 @@
 import { QuestionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { detectStarWithSource, evaluateAnswerWithSource } from "@/lib/ai/answer-evaluator";
+import { evaluateAnswerWithSource } from "@/lib/ai/answer-evaluator";
+import { detectMockStar } from "@/lib/ai/mock-answer-evaluator";
 
 type SubmitPracticeAnswerInput = {
   email: string;
@@ -113,34 +114,49 @@ export async function submitPracticeAnswer(input: SubmitPracticeAnswerInput): Pr
   });
 
   if (question.type === QuestionType.BEHAVIORAL) {
-    const star = await detectStarWithSource(trimmedAnswer, question.text);
+    const star = evaluation.result.star ?? {
+      situation: { present: false, evidence: "" },
+      task: { present: false, evidence: "" },
+      action: { present: false, evidence: "" },
+      result: { present: false, evidence: "" },
+      missingParts: ["situation", "task", "action", "result"] as const,
+      coachTip: "",
+    };
+
+    const starFallback = evaluation.provider === "MOCK" && !evaluation.result.star
+      ? detectMockStar(trimmedAnswer)
+      : null;
+
+    const finalStar = evaluation.provider === "MOCK" && starFallback
+      ? starFallback
+      : star;
 
     await prisma.starAnalysis.upsert({
       where: { answerId: answer.id },
       update: {
-        provider: star.provider,
-        situation: star.result.situation.present,
-        task: star.result.task.present,
-        action: star.result.action.present,
-        result: star.result.result.present,
-        situationEvidence: star.result.situation.evidence,
-        taskEvidence: star.result.task.evidence,
-        actionEvidence: star.result.action.evidence,
-        resultEvidence: star.result.result.evidence,
-        coachTip: star.result.coachTip,
+        provider: evaluation.provider,
+        situation: finalStar.situation.present,
+        task: finalStar.task.present,
+        action: finalStar.action.present,
+        result: finalStar.result.present,
+        situationEvidence: finalStar.situation.evidence,
+        taskEvidence: finalStar.task.evidence,
+        actionEvidence: finalStar.action.evidence,
+        resultEvidence: finalStar.result.evidence,
+        coachTip: finalStar.coachTip,
       },
       create: {
         answerId: answer.id,
-        provider: star.provider,
-        situation: star.result.situation.present,
-        task: star.result.task.present,
-        action: star.result.action.present,
-        result: star.result.result.present,
-        situationEvidence: star.result.situation.evidence,
-        taskEvidence: star.result.task.evidence,
-        actionEvidence: star.result.action.evidence,
-        resultEvidence: star.result.result.evidence,
-        coachTip: star.result.coachTip,
+        provider: evaluation.provider,
+        situation: finalStar.situation.present,
+        task: finalStar.task.present,
+        action: finalStar.action.present,
+        result: finalStar.result.present,
+        situationEvidence: finalStar.situation.evidence,
+        taskEvidence: finalStar.task.evidence,
+        actionEvidence: finalStar.action.evidence,
+        resultEvidence: finalStar.result.evidence,
+        coachTip: finalStar.coachTip,
       },
     });
   }
