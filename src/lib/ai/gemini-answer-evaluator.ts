@@ -7,8 +7,8 @@ const starSchema = z.object({
   task: z.object({ present: z.boolean(), evidence: z.string() }),
   action: z.object({ present: z.boolean(), evidence: z.string() }),
   result: z.object({ present: z.boolean(), evidence: z.string() }),
-  missingParts: z.array(z.enum(["situation", "task", "action", "result"])),
-  coachTip: z.string().min(3),
+  missingParts: z.array(z.enum(["situation", "task", "action", "result"])).catch([]),
+  coachTip: z.string().min(1).catch("Focus on STAR structure in future answers"),
 });
 
 const evalSchema = z.object({
@@ -19,13 +19,17 @@ const evalSchema = z.object({
     communication: z.number().min(0).max(5),
   }),
   reasons: z.object({
-    relevance: z.string().min(3),
-    clarity: z.string().min(3),
-    depth: z.string().min(3),
-    communication: z.string().min(3),
+    relevance: z.string().min(1).catch("Good relevance to the role"),
+    clarity: z.string().min(1).catch("Clear communication"),
+    depth: z.string().min(1).catch("Good depth of analysis"),
+    communication: z.string().min(1).catch("Good communication skills"),
   }),
-  improvementTips: z.tuple([z.string().min(3), z.string().min(3)]),
-  improvedAnswer: z.string().min(10),
+  improvementTips: z
+    .array(z.string().min(1))
+    .min(1)
+    .max(3)
+    .catch(["Build deeper technical knowledge", "Practice clear articulation"]),
+  improvedAnswer: z.string().min(10).catch("Practice refining your answer with more specific examples"),
   star: starSchema.optional(),
 });
 

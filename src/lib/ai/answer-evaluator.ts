@@ -22,7 +22,11 @@ export async function evaluateAnswerWithSource(
         provider: "GEMINI",
         result: await evaluateGeminiAnswer(input),
       };
-    } catch {
+    } catch (error) {
+      console.error(
+        "[GEMINI_FALLBACK] Evaluation failed:",
+        error instanceof Error ? error.message : String(error),
+      );
       return {
         provider: "MOCK",
         result: evaluateMockAnswer(input),
@@ -51,7 +55,11 @@ export async function detectStarWithSource(
         provider: "GEMINI",
         result: await detectGeminiStar(answerText, questionText),
       };
-    } catch {
+    } catch (error) {
+      console.error(
+        "[GEMINI_FALLBACK] STAR detection failed:",
+        error instanceof Error ? error.message : String(error),
+      );
       return {
         provider: "MOCK",
         result: detectMockStar(answerText),
