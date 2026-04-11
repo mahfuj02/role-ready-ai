@@ -11,7 +11,7 @@ export async function createPracticeSessionFromLatestSetup(
 ): Promise<CreatePracticeSessionResult | null> {
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true },
+    select: { id: true, currentJobId: true },
   });
 
   if (!user) {
@@ -38,6 +38,7 @@ export async function createPracticeSessionFromLatestSetup(
   const session = await prisma.practiceSession.create({
     data: {
       userId: user.id,
+      jobId: user.currentJobId || undefined,
       setupProfileId: latestSetup.id,
       totalQuestions: generated.length,
       questions: {

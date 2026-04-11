@@ -33,7 +33,7 @@ export async function saveSetupProfile(formData: FormData) {
 
   const dbUser = await prisma.user.findUnique({
     where: { email: sessionUser.email },
-    select: { id: true },
+    select: { id: true, currentJobId: true },
   });
 
   if (!dbUser) {
@@ -43,6 +43,7 @@ export async function saveSetupProfile(formData: FormData) {
   await prisma.setupProfile.create({
     data: {
       userId: dbUser.id,
+      jobId: dbUser.currentJobId || undefined,
       roleTitle: parsed.data.roleTitle,
       seniority: parsed.data.seniority,
       resumeText: parsed.data.resumeText,
