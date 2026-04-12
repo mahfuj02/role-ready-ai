@@ -21,7 +21,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           className="mt-8"
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo: callbackUrl });
+            await signIn("google", { redirectTo: callbackUrl }, { prompt: "select_account" });
           }}
         >
           <button

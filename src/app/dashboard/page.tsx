@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/require-user";
 import { getDashboardDataAction } from "@/lib/dashboard/actions";
+import { AppShell } from "@/components/app-shell";
 
 function formatDate(date: string | Date) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -16,15 +17,18 @@ export default async function DashboardPage() {
 
   if (!dashboardData) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-6 py-12">
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-slate-700">No practice sessions yet. Start practicing to see your progress!</p>
-      </main>
+      <AppShell>
+        <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-6 py-10">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Dashboard</h1>
+          <p className="text-slate-500">No practice sessions yet. Start practicing to see your progress!</p>
+        </main>
+      </AppShell>
     );
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
+    <AppShell>
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
 
       {/* Stats Section */}
@@ -212,5 +216,6 @@ export default async function DashboardPage() {
         </div>
       </section>
     </main>
+    </AppShell>
   );
 }

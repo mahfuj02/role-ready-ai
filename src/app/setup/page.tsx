@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { generatePracticeSession, saveSetupProfile } from "./actions";
 import FileUploadExtractor from "@/components/file-upload-extractor";
+import { AppShell } from "@/components/app-shell";
 
 type SetupPageProps = {
   searchParams: Promise<{ saved?: string; error?: string }>;
@@ -47,9 +48,10 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-12">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Interview setup</h1>
+    <AppShell>
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-10">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Interview Setup</h1>
         <p className="text-slate-700">
           Add your resume and target job description to generate role-specific questions.
         </p>
@@ -160,5 +162,6 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
         </button>
       </form>
     </main>
+    </AppShell>
   );
 }

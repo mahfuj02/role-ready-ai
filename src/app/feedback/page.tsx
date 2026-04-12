@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
+import { AppShell } from "@/components/app-shell";
 
 type FeedbackPageProps = {
   searchParams: Promise<{ session?: string }>;
@@ -56,8 +57,9 @@ export default async function FeedbackPage({ searchParams }: FeedbackPageProps) 
     currentSession?.questions.filter((question) => question.answers[0]?.feedback).length ?? 0;
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-12">
-      <h1 className="text-3xl font-semibold tracking-tight">Feedback</h1>
+    <AppShell>
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10">
+      <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Feedback</h1>
 
       {!currentSession && (
         <div className="rounded-lg border border-slate-200 bg-white p-5">
@@ -179,5 +181,6 @@ export default async function FeedbackPage({ searchParams }: FeedbackPageProps) 
         </section>
       )}
     </main>
+    </AppShell>
   );
 }

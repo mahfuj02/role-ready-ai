@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
 import { getUserJobs, setCurrentJob } from "@/lib/jobs/actions";
 import { redirect } from "next/navigation";
+import { AppShell } from "@/components/app-shell";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -34,28 +35,16 @@ export default async function Home() {
   const jobs = await getUserJobs();
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
+    <AppShell>
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Welcome, {session.user.name?.split(" ")[0] || "there"}
-          </h1>
-          <p className="mt-1 text-slate-500">Your interview preparations</p>
-        </div>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}
-        >
-          <button
-            type="submit"
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-          >
-            Sign out
-          </button>
-        </form>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          My Interview Preps
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Welcome back, {session.user.name?.split(" ")[0] || "there"}
+        </p>
       </div>
 
       {/* New Prep */}
@@ -91,6 +80,7 @@ export default async function Home() {
         )}
       </section>
     </main>
+    </AppShell>
   );
 }
 
@@ -180,7 +170,7 @@ async function LandingPage() {
           <form
             action={async () => {
               "use server";
-              await signIn("google", { redirectTo: "/" });
+              await signIn("google", { redirectTo: "/" }, { prompt: "select_account" });
             }}
           >
             <button
@@ -238,7 +228,7 @@ async function LandingPage() {
           <form
             action={async () => {
               "use server";
-              await signIn("google", { redirectTo: "/" });
+              await signIn("google", { redirectTo: "/" }, { prompt: "select_account" });
             }}
           >
             <button
@@ -398,7 +388,7 @@ async function LandingPage() {
             className="mt-10"
             action={async () => {
               "use server";
-              await signIn("google", { redirectTo: "/" });
+              await signIn("google", { redirectTo: "/" }, { prompt: "select_account" });
             }}
           >
             <button

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { submitAnswerAction } from "./actions";
+import { AppShell } from "@/components/app-shell";
 
 type PracticePageProps = {
   searchParams: Promise<{ session?: string; saved?: string; error?: string }>;
@@ -48,8 +49,9 @@ export default async function PracticePage({ searchParams }: PracticePageProps) 
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-12">
-      <h1 className="text-3xl font-semibold tracking-tight">Practice</h1>
+    <AppShell>
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-10">
+      <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Practice</h1>
 
       {params.error === "validation" && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -146,5 +148,6 @@ export default async function PracticePage({ searchParams }: PracticePageProps) 
         </section>
       )}
     </main>
+    </AppShell>
   );
 }
