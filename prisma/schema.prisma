@@ -27,6 +27,11 @@ enum AiProvider {
   MOCK
 }
 
+enum AnswerInputType {
+  TEXT
+  SPEECH
+}
+
 model User {
   id              String            @id @default(cuid())
   name            String?
@@ -110,8 +115,26 @@ model SetupProfile {
   user             User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   job              Job?   @relation(fields: [jobId], references: [id], onDelete: Cascade)
   practiceSessions PracticeSession[]
+  gapAnalysis      GapAnalysis?
 
   @@index([userId, createdAt])
+}
+
+model GapAnalysis {
+  id                  String     @id @default(cuid())
+  setupProfileId      String     @unique
+  provider            AiProvider @default(GEMINI)
+  matchScore          Int        // 0–100 overall match percentage
+  skillGaps           Json       // [{skill, importance: "critical"|"nice-to-have", context}]
+  resumeSuggestions   Json       // [{type: "rewrite"|"add", section, original, suggestion, reason}]
+  keywordsMissing     String[]   // keywords in JD not found in resume
+  strengthAreas       String[]   // areas already well-covered
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  setupProfile SetupProfile @relation(fields: [setupProfileId], references: [id], onDelete: Cascade)
+
+  @@index([setupProfileId])
 }
 
 model PracticeSession {
@@ -156,9 +179,10 @@ model Answer {
   id                String   @id @default(cuid())
   practiceSessionId String
   questionId        String
-  text              String   @db.Text
+  text              String          @db.Text
+  inputType         AnswerInputType @default(TEXT)
   elapsedSeconds    Int?
-  createdAt         DateTime @default(now())
+  createdAt         DateTime        @default(now())
   updatedAt         DateTime @updatedAt
 
   practiceSession PracticeSession @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
