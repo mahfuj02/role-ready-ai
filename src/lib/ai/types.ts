@@ -69,3 +69,34 @@ export type StarWithSource = {
   provider: AiProviderSource;
   result: StarResult;
 };
+
+// ── Gap Analysis ─────────────────────────────────────────────────────────────
+
+export type GapAnalysisInput = {
+  roleTitle: string;
+  seniority: string;
+  resumeText: string;
+  jobDescriptionText: string;
+};
+
+export type SkillGap = {
+  skill: string;
+  importance: "critical" | "nice-to-have";
+  context: string;
+};
+
+export type ResumeSuggestion = {
+  type: "rewrite" | "add";
+  section: "experience" | "skills" | "projects" | "summary";
+  original: string | null;
+  suggestion: string;
+  reason: string;
+};
+
+export type GapAnalysisResult = {
+  matchScore: number;
+  skillGaps: SkillGap[];
+  resumeSuggestions: ResumeSuggestion[];
+  keywordsMissing: string[];
+  strengthAreas: string[];
+};

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { createPracticeSessionFromLatestSetup } from "@/lib/practice/create-practice-session";
+import { generateAndSaveGapAnalysis } from "@/lib/gap-analysis/generate-gap-analysis";
 
 const setupSchema = z.object({
   roleTitle: z.string().trim().min(2).max(120),
@@ -40,8 +41,10 @@ export async function saveSetupProfile(formData: FormData) {
     redirect("/sign-in");
   }
 
+  let setupProfileId: string;
+
   if (dbUser.currentJobId) {
-    await prisma.setupProfile.upsert({
+    const profile = await prisma.setupProfile.upsert({
       where: { jobId: dbUser.currentJobId },
       update: {
         roleTitle: parsed.data.roleTitle,
@@ -57,9 +60,11 @@ export async function saveSetupProfile(formData: FormData) {
         resumeText: parsed.data.resumeText,
         jobDescriptionText: parsed.data.jobDescriptionText,
       },
+      select: { id: true },
     });
+    setupProfileId = profile.id;
   } else {
-    await prisma.setupProfile.create({
+    const profile = await prisma.setupProfile.create({
       data: {
         userId: dbUser.id,
         roleTitle: parsed.data.roleTitle,
@@ -67,8 +72,13 @@ export async function saveSetupProfile(formData: FormData) {
         resumeText: parsed.data.resumeText,
         jobDescriptionText: parsed.data.jobDescriptionText,
       },
+      select: { id: true },
     });
+    setupProfileId = profile.id;
   }
+
+  // Generate gap analysis in the background — don't block if it fails
+  generateAndSaveGapAnalysis(setupProfileId).catch(() => {});
 
   redirect("/setup?saved=1");
 }
