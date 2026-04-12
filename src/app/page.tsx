@@ -12,6 +12,18 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
+function formatDateTime(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
+  }).format(date);
+}
+
 export default async function Home() {
   const session = await auth();
 
@@ -118,6 +130,7 @@ function JobCard({
     setupProfile?: { roleTitle: string; seniority: string };
     sessionCount: number;
     totalQuestionsAttempted: number;
+    lastOpenedAt: Date;
     lastPracticedAt?: Date;
     createdAt: Date;
   };
@@ -148,6 +161,10 @@ function JobCard({
 
           {/* Stats */}
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
+            <div className="w-full">
+              <div className="font-semibold text-slate-900">{formatDateTime(job.lastOpenedAt)}</div>
+              <div>Last Opened</div>
+            </div>
             <div>
               <div className="font-semibold text-slate-900">{job.sessionCount}</div>
               <div>Sessions</div>

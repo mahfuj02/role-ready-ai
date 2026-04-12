@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { generatePracticeSession, saveSetupProfile } from "./actions";
+import FileUploadExtractor from "@/components/file-upload-extractor";
 
 type SetupPageProps = {
   searchParams: Promise<{ saved?: string; error?: string }>;
@@ -101,6 +102,7 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
         <label className="grid gap-2 text-sm">
           <span className="font-medium text-slate-800">Resume text</span>
           <textarea
+            id="resumeText"
             name="resumeText"
             required
             minLength={100}
@@ -109,11 +111,16 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
             rows={10}
             className="rounded-lg border border-slate-300 px-3 py-2 outline-none ring-teal-300 transition focus:ring"
           />
+          <FileUploadExtractor
+            textareaId="resumeText"
+            label="Upload resume file (PDF, DOC, DOCX, TXT)"
+          />
         </label>
 
         <label className="grid gap-2 text-sm">
           <span className="font-medium text-slate-800">Job description text</span>
           <textarea
+            id="jobDescriptionText"
             name="jobDescriptionText"
             required
             minLength={100}
@@ -121,6 +128,10 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
             placeholder="Paste the target job description..."
             rows={10}
             className="rounded-lg border border-slate-300 px-3 py-2 outline-none ring-teal-300 transition focus:ring"
+          />
+          <FileUploadExtractor
+            textareaId="jobDescriptionText"
+            label="Upload job description file (PDF, DOC, DOCX, TXT)"
           />
         </label>
 

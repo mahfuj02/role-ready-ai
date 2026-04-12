@@ -17,11 +17,14 @@
     "@google/genai": "^1.48.0",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
+    "mammoth": "^1.12.0",
     "next": "16.2.2",
     "next-auth": "^5.0.0-beta.30",
+    "pdf-parse": "^2.4.5",
     "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "word-extractor": "^1.0.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {

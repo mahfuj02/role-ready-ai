@@ -13,6 +13,7 @@ export type JobWithStats = {
   };
   sessionCount: number;
   totalQuestionsAttempted: number;
+  lastOpenedAt: Date;
   lastPracticedAt?: Date;
   createdAt: Date;
 };
@@ -46,6 +47,7 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
         },
       },
       practiceSessions: {
+        orderBy: { createdAt: "desc" },
         select: {
           id: true,
           createdAt: true,
@@ -55,7 +57,7 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
         },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
   });
 
   return jobs.map((job) => ({
@@ -73,6 +75,7 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
       (sum, session) => sum + session.answers.length,
       0
     ),
+    lastOpenedAt: job.updatedAt,
     lastPracticedAt:
       job.practiceSessions.length > 0
         ? job.practiceSessions[0].createdAt
@@ -175,6 +178,11 @@ export async function setCurrentJob(jobId: string): Promise<boolean> {
   await prisma.user.update({
     where: { id: user.id },
     data: { currentJobId: jobId },
+  });
+
+  await prisma.job.update({
+    where: { id: jobId },
+    data: { updatedAt: new Date() },
   });
 
   return true;
