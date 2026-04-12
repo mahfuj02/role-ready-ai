@@ -1,107 +1,112 @@
-"use client";
+import Link from "next/link";
+import { AppShell } from "@/components/app-shell";
+import { NewJobForm } from "./new-job-form";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createJob } from "@/lib/jobs/actions";
+const steps = [
+  {
+    number: "01",
+    title: "Name your prep",
+    desc: "Give it a clear name so you can tell preps apart at a glance.",
+    active: true,
+  },
+  {
+    number: "02",
+    title: "Upload resume & JD",
+    desc: "Paste or upload your resume and the target job description.",
+    active: false,
+  },
+  {
+    number: "03",
+    title: "Get gap analysis",
+    desc: "AI maps your resume against the JD and shows exactly what's missing.",
+    active: false,
+  },
+  {
+    number: "04",
+    title: "Practice & get feedback",
+    desc: "Answer role-specific questions. Get STAR coaching after each answer.",
+    active: false,
+  },
+];
 
 export default function NewJobPage() {
-  const router = useRouter();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    if (!name.trim()) {
-      setError("Job name is required");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const jobId = await createJob(name, description);
-      if (jobId) {
-        router.push(`/setup`);
-      } else {
-        setError("Failed to create job. Please try again.");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Create New Job Preparation</h1>
-        <p className="mt-2 text-slate-600">
-          Set up a new interview preparation for a job opportunity.
-        </p>
-      </div>
+    <AppShell>
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 py-10">
 
-      <form onSubmit={handleSubmit} className="space-y-6 rounded-lg border border-slate-200 p-6">
-        {error && (
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">
-            {error}
-          </div>
-        )}
+        {/* Back link */}
+        <Link
+          href="/"
+          className="inline-flex w-fit items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-900"
+        >
+          ← Back to my preps
+        </Link>
 
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-900">
-            Job Title / Company <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Senior Software Engineer at Google"
-            className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-teal-500 focus:outline-none"
-            disabled={loading}
-          />
-          <p className="mt-1 text-xs text-slate-500">
-            Example: &quot;Product Manager at Meta&quot;, &quot;SWE at Amazon&quot;
+        {/* Page header */}
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--brand-teal)" }}>
+            Step 1 of 4
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            New interview prep
+          </h1>
+          <p className="text-sm text-slate-500">
+            Name your prep so you can identify it in your dashboard. You&apos;ll add
+            the resume and job description next.
           </p>
         </div>
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-slate-900">
-            Description (Optional)
-          </label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add details about this role or position..."
-            rows={3}
-            className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-teal-500 focus:outline-none"
-            disabled={loading}
-          />
+        {/* Form card */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <NewJobForm />
         </div>
 
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 rounded-lg bg-teal-400 px-4 py-2.5 font-medium text-slate-950 transition hover:bg-teal-300 disabled:opacity-50"
-          >
-            {loading ? "Creating..." : "Create & Continue"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="rounded-lg border border-slate-300 px-4 py-2.5 font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Cancel
-          </button>
+        {/* What happens next */}
+        <div className="space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            What happens next
+          </p>
+          <div className="grid gap-3">
+            {steps.map(({ number, title, desc, active }) => (
+              <div
+                key={number}
+                className={[
+                  "flex items-start gap-4 rounded-xl border p-4 transition",
+                  active
+                    ? "border-teal-200 bg-teal-50"
+                    : "border-slate-100 bg-white",
+                ].join(" ")}
+              >
+                <div
+                  className={[
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold",
+                    active
+                      ? "text-white"
+                      : "bg-slate-100 text-slate-400",
+                  ].join(" ")}
+                  style={active ? { background: "var(--brand-teal)" } : {}}
+                >
+                  {number}
+                </div>
+                <div>
+                  <p className={["text-sm font-semibold", active ? "text-teal-800" : "text-slate-700"].join(" ")}>
+                    {title}
+                  </p>
+                  <p className={["mt-0.5 text-xs leading-relaxed", active ? "text-teal-600" : "text-slate-400"].join(" ")}>
+                    {desc}
+                  </p>
+                </div>
+                {active && (
+                  <span className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-medium text-white" style={{ background: "var(--brand-teal)" }}>
+                    You are here
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </form>
-    </main>
+
+      </main>
+    </AppShell>
   );
 }
