@@ -19,22 +19,28 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
   } | null = null;
 
   if (user.email) {
-    const existing = await prisma.setupProfile.findFirst({
-      where: {
-        user: {
-          email: user.email,
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      select: {
-        roleTitle: true,
-        seniority: true,
-        resumeText: true,
-        jobDescriptionText: true,
-      },
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email },
+      select: { id: true, currentJobId: true },
     });
+
+    const existing = dbUser
+      ? await prisma.setupProfile.findFirst({
+          where: {
+            userId: dbUser.id,
+            ...(dbUser.currentJobId ? { jobId: dbUser.currentJobId } : { jobId: null }),
+          },
+          orderBy: {
+            updatedAt: "desc",
+          },
+          select: {
+            roleTitle: true,
+            seniority: true,
+            resumeText: true,
+            jobDescriptionText: true,
+          },
+        })
+      : null;
 
     latestProfile = existing;
   }

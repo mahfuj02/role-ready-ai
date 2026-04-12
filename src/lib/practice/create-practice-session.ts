@@ -19,8 +19,11 @@ export async function createPracticeSessionFromLatestSetup(
   }
 
   const latestSetup = await prisma.setupProfile.findFirst({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
+    where: {
+      userId: user.id,
+      ...(user.currentJobId ? { jobId: user.currentJobId } : { jobId: null }),
+    },
+    orderBy: { updatedAt: "desc" },
   });
 
   if (!latestSetup) {

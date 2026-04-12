@@ -129,20 +129,15 @@ export async function getCurrentJob() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    include: {
-      jobs: {
-        where: { id: { equals: "" } }, // Will be overridden
-        take: 1,
-      },
-    },
+    select: { id: true, currentJobId: true },
   });
 
   if (!user || !user.currentJobId) {
     return null;
   }
 
-  return await prisma.job.findUnique({
-    where: { id: user.currentJobId },
+  return await prisma.job.findFirst({
+    where: { id: user.currentJobId, userId: user.id },
     include: {
       setupProfile: true,
     },

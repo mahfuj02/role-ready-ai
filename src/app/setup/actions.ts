@@ -40,16 +40,35 @@ export async function saveSetupProfile(formData: FormData) {
     redirect("/sign-in");
   }
 
-  await prisma.setupProfile.create({
-    data: {
-      userId: dbUser.id,
-      jobId: dbUser.currentJobId || undefined,
-      roleTitle: parsed.data.roleTitle,
-      seniority: parsed.data.seniority,
-      resumeText: parsed.data.resumeText,
-      jobDescriptionText: parsed.data.jobDescriptionText,
-    },
-  });
+  if (dbUser.currentJobId) {
+    await prisma.setupProfile.upsert({
+      where: { jobId: dbUser.currentJobId },
+      update: {
+        roleTitle: parsed.data.roleTitle,
+        seniority: parsed.data.seniority,
+        resumeText: parsed.data.resumeText,
+        jobDescriptionText: parsed.data.jobDescriptionText,
+      },
+      create: {
+        userId: dbUser.id,
+        jobId: dbUser.currentJobId,
+        roleTitle: parsed.data.roleTitle,
+        seniority: parsed.data.seniority,
+        resumeText: parsed.data.resumeText,
+        jobDescriptionText: parsed.data.jobDescriptionText,
+      },
+    });
+  } else {
+    await prisma.setupProfile.create({
+      data: {
+        userId: dbUser.id,
+        roleTitle: parsed.data.roleTitle,
+        seniority: parsed.data.seniority,
+        resumeText: parsed.data.resumeText,
+        jobDescriptionText: parsed.data.jobDescriptionText,
+      },
+    });
+  }
 
   redirect("/setup?saved=1");
 }

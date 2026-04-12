@@ -14,9 +14,19 @@ export default async function FeedbackPage({ searchParams }: FeedbackPageProps) 
     return null;
   }
 
+  const dbUser = await prisma.user.findUnique({
+    where: { email: user.email },
+    select: { id: true, currentJobId: true },
+  });
+
+  if (!dbUser) {
+    return null;
+  }
+
   const currentSession = await prisma.practiceSession.findFirst({
     where: {
-      user: { email: user.email },
+      userId: dbUser.id,
+      ...(dbUser.currentJobId ? { jobId: dbUser.currentJobId } : { jobId: null }),
       ...(params.session ? { id: params.session } : {}),
     },
     orderBy: { createdAt: "desc" },
