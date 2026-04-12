@@ -2,25 +2,12 @@ import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
 import { getUserJobs, setCurrentJob } from "@/lib/jobs/actions";
 import { redirect } from "next/navigation";
-import { AppShell } from "@/components/app-shell";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-CA", {
     year: "numeric",
     month: "short",
     day: "2-digit",
-    timeZone: "UTC",
-  }).format(date);
-}
-
-function formatDateTime(date: Date) {
-  return new Intl.DateTimeFormat("en-CA", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
     timeZone: "UTC",
   }).format(date);
 }
@@ -33,54 +20,99 @@ export default async function Home() {
   }
 
   const jobs = await getUserJobs();
+  const displayName = session.user.name?.split(" ")[0] || "User";
+  const initials =
+    session.user.name
+      ?.split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "U";
+
+  async function handleSignOut() {
+    "use server";
+    await signOut({ redirectTo: "/" });
+  }
 
   return (
-    <AppShell>
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          My Interview Preps
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Welcome back, {session.user.name?.split(" ")[0] || "there"}
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-300">
+      <header className="border-b border-cyan-900/40 bg-[#071f3f] text-white">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-3.5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-800 text-cyan-100">
+              <span className="text-xs">◉</span>
+            </div>
+            <div className="text-3xl font-semibold tracking-tight">
+              Prep<span className="text-cyan-300">AI</span>
+            </div>
+          </div>
 
-      {/* New Prep */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Job Preparations</h2>
-          <Link
-            href="/jobs/new"
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
-            style={{ background: "var(--brand-teal)" }}
-          >
-            <span className="text-base leading-none">+</span> New prep
-          </Link>
+          <div className="flex items-center gap-2 rounded-full border border-cyan-900/60 bg-[#09284f] px-3 py-1.5 text-sm text-slate-200">
+            <span className="px-2">{displayName}</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-600 bg-[#08375b] text-cyan-200">
+              {initials}
+            </span>
+            <form action={handleSignOut}>
+              <button
+                type="submit"
+                className="rounded-full px-2 py-1 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
+      </header>
 
-        {jobs.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 p-12 text-center">
-            <p className="text-slate-500">No preparations yet.</p>
+      <section
+        className="h-[250px] border-b border-cyan-900/40"
+        style={{
+          backgroundColor: "#072548",
+          backgroundImage:
+            "linear-gradient(to right, rgba(19,78,132,.35) 1px, transparent 1px), linear-gradient(to bottom, rgba(19,78,132,.35) 1px, transparent 1px), radial-gradient(circle at 50% 40%, rgba(148,163,184,.15), transparent 35%)",
+          backgroundSize: "56px 56px, 56px 56px, 100% 100%",
+        }}
+      />
+
+      <main className="mx-auto -mt-10 flex w-full max-w-6xl flex-col gap-8 px-6 pb-12">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">My Interview Preps</h1>
+              <p className="mt-1 text-sm text-slate-500">Welcome back, {displayName}</p>
+            </div>
             <Link
               href="/jobs/new"
-              className="mt-4 inline-flex items-center gap-1 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
               style={{ background: "var(--brand-teal)" }}
             >
-              Create your first prep
+              <span className="text-base leading-none">+</span> New prep
             </Link>
           </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {jobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
-    </AppShell>
+        </section>
+
+        <section>
+          {jobs.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
+              <p className="text-slate-500">No preparations yet.</p>
+              <Link
+                href="/jobs/new"
+                className="mt-4 inline-flex items-center gap-1 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                style={{ background: "var(--brand-teal)" }}
+              >
+                Create your first prep
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {jobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
   );
 }
 
