@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import mammoth from "mammoth";
-import pdfParse from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 import WordExtractor from "word-extractor";
 
 export const runtime = "nodejs";
@@ -64,7 +64,9 @@ export async function POST(request: Request) {
     let text = "";
 
     if (extension === "pdf") {
-      const parsed = await pdfParse(buffer);
+      const parser = new PDFParse({ data: buffer });
+      const parsed = await parser.getText();
+      await parser.destroy();
       text = parsed.text;
     } else if (extension === "docx") {
       const parsed = await mammoth.extractRawText({ buffer });
