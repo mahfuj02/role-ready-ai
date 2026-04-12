@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import mammoth from "mammoth";
-import { PDFParse } from "pdf-parse";
+import pdfParse from "pdf-parse";
 import WordExtractor from "word-extractor";
 
 export const runtime = "nodejs";
@@ -64,9 +64,7 @@ export async function POST(request: Request) {
     let text = "";
 
     if (extension === "pdf") {
-      const parser = new PDFParse({ data: buffer });
-      const parsed = await parser.getText();
-      await parser.destroy();
+      const parsed = await pdfParse(buffer);
       text = parsed.text;
     } else if (extension === "docx") {
       const parsed = await mammoth.extractRawText({ buffer });
@@ -85,7 +83,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ text: normalized });
   } catch (error) {
-    console.error("extract-text error:", error);
-    return NextResponse.json({ error: "Failed to extract text from file." }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("extract-text error:", message);
+    const isDev = process.env.NODE_ENV === "development";
+    return NextResponse.json(
+      { error: isDev ? `Extraction failed: ${message}` : "Failed to extract text from file." },
+      { status: 500 },
+    );
   }
 }
