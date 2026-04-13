@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { generateAndSaveGapAnalysis } from "@/lib/gap-analysis/generate-gap-analysis";
+import { createPracticeSessionFromLatestSetup } from "@/lib/practice/create-practice-session";
 
 const newPrepSchema = z.object({
   roleTitle: z.string().trim().min(2).max(120),
@@ -70,8 +71,9 @@ export async function createNewPrep(formData: FormData) {
     select: { id: true },
   });
 
-  // Kick off gap analysis async — don't block the redirect
+  // Kick off gap analysis + question generation async — don't block redirect
   generateAndSaveGapAnalysis(profile.id).catch(() => {});
+  createPracticeSessionFromLatestSetup(sessionUser.email).catch(() => {});
 
   redirect(`/gap-analysis?job=${job.id}`);
 }
