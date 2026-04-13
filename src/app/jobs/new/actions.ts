@@ -8,6 +8,7 @@ import { generateAndSaveGapAnalysis } from "@/lib/gap-analysis/generate-gap-anal
 
 const newPrepSchema = z.object({
   roleTitle: z.string().trim().min(2).max(120),
+  company: z.string().trim().max(120).optional(),
   seniority: z.string().trim().min(2).max(80),
   resumeText: z.string().trim().min(100),
   jobDescriptionText: z.string().trim().min(100),
@@ -20,8 +21,11 @@ export async function createNewPrep(formData: FormData) {
     redirect("/sign-in");
   }
 
+  const rawCompany = (formData.get("company") as string)?.trim();
+
   const parsed = newPrepSchema.safeParse({
     roleTitle: formData.get("roleTitle"),
+    company: rawCompany || undefined,
     seniority: formData.get("seniority"),
     resumeText: formData.get("resumeText"),
     jobDescriptionText: formData.get("jobDescriptionText"),
@@ -40,20 +44,20 @@ export async function createNewPrep(formData: FormData) {
     redirect("/sign-in");
   }
 
-  const { roleTitle, seniority, resumeText, jobDescriptionText } = parsed.data;
+  const { roleTitle, company, seniority, resumeText, jobDescriptionText } = parsed.data;
 
-  // Create the job (name = role title)
+  // Job name: "Company - Role" if company provided, else just role title
+  const jobName = company ? `${company} - ${roleTitle}` : roleTitle;
+
   const job = await prisma.job.create({
-    data: { userId: dbUser.id, name: roleTitle },
+    data: { userId: dbUser.id, name: jobName },
   });
 
-  // Set as current job
   await prisma.user.update({
     where: { id: dbUser.id },
     data: { currentJobId: job.id },
   });
 
-  // Create the setup profile linked to the job
   const profile = await prisma.setupProfile.create({
     data: {
       userId: dbUser.id,

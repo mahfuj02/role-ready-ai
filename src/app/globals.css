@@ -69,3 +69,21 @@ body {
 .animate-prep-glow {
   animation: prep-glow 2.4s ease-in-out infinite;
 }
+
+/* ── Analyse button shimmer sweep ────────────────────────────── */
+@keyframes shimmer-sweep {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #0b6b74 0%, #0E7C86 40%, #12a3b0 60%, #0E7C86 100%);
+  background-size: 200% auto;
+  animation: shimmer-sweep 2.8s linear infinite;
+}
+
+/* ── Upload zone transition ───────────────────────────────────── */
+.upload-zone {
+  transition: border-color 0.18s ease, background-color 0.18s ease,
+              box-shadow 0.18s ease, transform 0.18s ease;
+}
