@@ -3,16 +3,23 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
+export type SkillTag = {
+  label: string;
+  variant: "missing" | "weak" | "strong";
+};
+
 export type JobWithStats = {
   id: string;
   name: string;
-  description?: string;
-  setupProfile?: {
-    roleTitle: string;
-    seniority: string;
-  };
+  companyName: string;
+  roleTitle: string;
+  seniority: string;
   sessionCount: number;
   totalQuestionsAttempted: number;
+  totalQuestionsAvailable: number;
+  matchScore?: number;
+  skillTags: SkillTag[];
+  status: "new" | "just_started" | "active";
   lastOpenedAt: Date;
   lastPracticedAt?: Date;
   createdAt: Date;
@@ -44,6 +51,13 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
         select: {
           roleTitle: true,
           seniority: true,
+          gapAnalysis: {
+            select: {
+              matchScore: true,
+              skillGaps: true,
+              strengthAreas: true,
+            },
+          },
         },
       },
       practiceSessions: {
@@ -51,6 +65,7 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
         select: {
           id: true,
           createdAt: true,
+          totalQuestions: true,
           answers: {
             select: { id: true },
           },
@@ -60,34 +75,86 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
     orderBy: { updatedAt: "desc" },
   });
 
-  return jobs.map((job) => ({
-    id: job.id,
-    name: job.name,
-    description: job.description || undefined,
-    setupProfile: job.setupProfile
-      ? {
-          roleTitle: job.setupProfile.roleTitle,
-          seniority: job.setupProfile.seniority,
-        }
-      : undefined,
-    sessionCount: job.practiceSessions.length,
-    totalQuestionsAttempted: job.practiceSessions.reduce(
-      (sum, session) => sum + session.answers.length,
+  return jobs.map((job) => {
+    // Parse company + role from "Company - Role" or fall back to setupProfile
+    const nameParts = job.name.split(" - ");
+    const companyName = nameParts.length > 1 ? nameParts[0].trim() : "";
+    const fallbackRole =
+      nameParts.length > 1 ? nameParts.slice(1).join(" - ").trim() : job.name;
+    const roleTitle = job.setupProfile?.roleTitle || fallbackRole;
+    const seniority = job.setupProfile?.seniority || "";
+
+    // Progress
+    const totalQuestionsAttempted = job.practiceSessions.reduce(
+      (sum, s) => sum + s.answers.length,
       0
-    ),
-    lastOpenedAt: job.updatedAt,
-    lastPracticedAt:
-      job.practiceSessions.length > 0
-        ? job.practiceSessions[0].createdAt
-        : undefined,
-    createdAt: job.createdAt,
-  }));
+    );
+    const totalQuestionsAvailable = job.practiceSessions.reduce(
+      (sum, s) => sum + s.totalQuestions,
+      0
+    );
+
+    // Status
+    const pct =
+      totalQuestionsAvailable > 0
+        ? totalQuestionsAttempted / totalQuestionsAvailable
+        : 0;
+    const status =
+      job.practiceSessions.length === 0
+        ? "new"
+        : pct >= 0.3
+          ? "active"
+          : "just_started";
+
+    // Gap analysis data
+    const ga = job.setupProfile?.gapAnalysis;
+    const matchScore = ga?.matchScore ?? undefined;
+
+    const skillTags: SkillTag[] = [];
+    if (ga) {
+      type RawGap = { skill: string; importance: string };
+      const gaps = (ga.skillGaps as RawGap[]) ?? [];
+      for (const g of gaps.slice(0, 2)) {
+        skillTags.push({
+          label: `${g.skill} ${g.importance === "critical" ? "missing" : "weak"}`,
+          variant: g.importance === "critical" ? "missing" : "weak",
+        });
+      }
+      const strengths = (ga.strengthAreas as string[]) ?? [];
+      if (strengths.length > 0 && skillTags.length < 3) {
+        skillTags.push({ label: `${strengths[0]} strong`, variant: "strong" });
+      }
+    }
+
+    return {
+      id: job.id,
+      name: job.name,
+      companyName,
+      roleTitle,
+      seniority,
+      sessionCount: job.practiceSessions.length,
+      totalQuestionsAttempted,
+      totalQuestionsAvailable,
+      matchScore,
+      skillTags,
+      status,
+      lastOpenedAt: job.updatedAt,
+      lastPracticedAt:
+        job.practiceSessions.length > 0
+          ? job.practiceSessions[0].createdAt
+          : undefined,
+      createdAt: job.createdAt,
+    };
+  });
 }
 
 /**
  * Create a new job
  */
-export async function createJob(name: string, description?: string): Promise<string | null> {
+export async function createJob(
+  name: string,
+  description?: string
+): Promise<string | null> {
   const session = await auth();
 
   if (!session?.user?.email) {
@@ -166,7 +233,6 @@ export async function setCurrentJob(jobId: string): Promise<boolean> {
     return false;
   }
 
-  // Verify job belongs to user
   const job = await prisma.job.findFirst({
     where: { id: jobId, userId: user.id },
   });
@@ -258,7 +324,6 @@ export async function deleteJob(jobId: string): Promise<boolean> {
     where: { id: jobId },
   });
 
-  // If this was current job, set to null
   if (user.currentJobId === jobId) {
     await prisma.user.update({
       where: { id: user.id },

@@ -1,17 +1,57 @@
 import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
-import { getUserJobs, setCurrentJob } from "@/lib/jobs/actions";
+import { getUserJobs, setCurrentJob, type JobWithStats, type SkillTag } from "@/lib/jobs/actions";
 import { redirect } from "next/navigation";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-CA", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    timeZone: "UTC",
-  }).format(date);
+// ── Circular progress donut ────────────────────────────────────────────────────
+
+function CircularProgress({ pct, color }: { pct: number; color: string }) {
+  const r = 15.9155;
+  const circ = 2 * Math.PI * r;
+  const dash = Math.min(pct / 100, 1) * circ;
+  return (
+    <div className="relative flex h-14 w-14 items-center justify-center">
+      <svg viewBox="0 0 36 36" className="absolute inset-0 h-full w-full -rotate-90">
+        <circle cx="18" cy="18" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+        <circle
+          cx="18" cy="18" r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="3"
+          strokeDasharray={`${dash} ${circ - dash}`}
+          strokeLinecap="round"
+        />
+      </svg>
+      <span className="relative text-xs font-bold" style={{ color }}>{pct}%</span>
+    </div>
+  );
 }
+
+// ── Skill tag pill ─────────────────────────────────────────────────────────────
+
+const TAG_STYLES: Record<SkillTag["variant"], string> = {
+  missing: "bg-red-50 text-red-600",
+  weak:    "bg-amber-50 text-amber-700",
+  strong:  "bg-green-50 text-green-700",
+};
+
+function SkillTagPill({ tag }: { tag: SkillTag }) {
+  return (
+    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${TAG_STYLES[tag.variant]}`}>
+      {tag.label}
+    </span>
+  );
+}
+
+// ── Card accent colours (alternating teal / amber) ────────────────────────────
+
+const ACCENTS = [
+  { border: "#0E7C86", avatar: "#07505a", btn: "#0E7C86", ring: "#0E7C86" },
+  { border: "#F4BB42", avatar: "#7a5a00", btn: "#d49f1a", ring: "#F4BB42" },
+];
+
+// ── Home (logged-in) ──────────────────────────────────────────────────────────
 
 export default async function Home() {
   const session = await auth();
@@ -21,14 +61,23 @@ export default async function Home() {
   }
 
   const jobs = await getUserJobs();
-  const displayName = session.user.name?.split(" ")[0] || "User";
+  const firstName = session.user.name?.split(" ")[0] || "there";
+  const displayName =
+    session.user.name
+      ?.split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p, i) => (i === 0 ? p : p[0] + "."))
+      .join(" ") || "User";
   const initials =
     session.user.name
       ?.split(" ")
       .filter(Boolean)
       .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
+      .map((p) => p[0]?.toUpperCase())
       .join("") || "U";
+
+  const activeCount = jobs.filter((j) => j.status !== "new").length;
 
   async function handleSignOut() {
     "use server";
@@ -36,18 +85,22 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-300">
-      <header className="border-b border-cyan-900/40 bg-[#071f3f] text-white">
+    <div className="min-h-screen" style={{ backgroundColor: "#f1f4f8" }}>
+
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-50 border-b border-cyan-900/40 bg-[#071f3f]">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-3.5">
+          {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-800 text-cyan-100">
-              <span className="text-xs">◉</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-700 text-cyan-100 text-base">
+              ◉
             </div>
-            <div className="text-3xl font-semibold tracking-tight">
-              Prep<span className="text-cyan-300">AI</span>
-            </div>
+            <span className="text-2xl font-bold tracking-tight text-white">
+              Prep<span className="text-cyan-400">AI</span>
+            </span>
           </div>
 
+          {/* Profile */}
           <ProfileDropdown
             displayName={displayName}
             initials={initials}
@@ -56,124 +109,204 @@ export default async function Home() {
         </div>
       </header>
 
+      {/* ── Hero ── */}
       <section
-        className="h-[250px] border-b border-cyan-900/40"
+        className="relative overflow-hidden border-b border-cyan-900/30 px-6 py-12"
         style={{
           backgroundColor: "#072548",
           backgroundImage:
-            "linear-gradient(to right, rgba(19,78,132,.35) 1px, transparent 1px), linear-gradient(to bottom, rgba(19,78,132,.35) 1px, transparent 1px), radial-gradient(circle at 50% 40%, rgba(148,163,184,.15), transparent 35%)",
-          backgroundSize: "56px 56px, 56px 56px, 100% 100%",
+            "linear-gradient(to right, rgba(19,78,132,.35) 1px, transparent 1px), linear-gradient(to bottom, rgba(19,78,132,.35) 1px, transparent 1px)",
+          backgroundSize: "52px 52px",
         }}
-      />
-
-      <main className="mx-auto -mt-10 flex w-full max-w-6xl flex-col gap-8 px-6 pb-12">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">My Interview Preps</h1>
-              <p className="mt-1 text-sm text-slate-500">Welcome back, {displayName}</p>
+      >
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8">
+          {/* Left copy */}
+          <div>
+            {/* Badge */}
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-cyan-700/30 px-3 py-1 text-xs font-medium text-cyan-300 border border-cyan-700/40">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+              {activeCount} active prep{activeCount !== 1 ? "s" : ""}
             </div>
+
+            <h1 className="text-3xl font-extrabold leading-snug tracking-tight text-white sm:text-4xl">
+              Ready to{" "}
+              <span className="text-cyan-400">practice</span>{" "}
+              today,<br />{firstName}?
+            </h1>
+            <p className="mt-3 text-sm text-slate-400">
+              Pick up where you left off or start a new prep below.
+            </p>
+          </div>
+
+          {/* New prep session CTA */}
+          <Link
+            href="/jobs/new"
+            className="animate-prep-glow flex-shrink-0 flex items-center gap-4 rounded-2xl border border-cyan-700/50 bg-[#09324f] px-6 py-4 text-white shadow-lg transition hover:border-cyan-500/60 hover:bg-[#0a3a5c]"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-700/40 text-cyan-300 text-xl">
+              ✦
+            </span>
+            <span>
+              <div className="font-bold text-white">New prep session</div>
+              <div className="text-xs text-slate-400 mt-0.5">Upload resume + job description</div>
+            </span>
+          </Link>
+        </div>
+
+        {/* Scroll hint */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#09324f] border border-cyan-800/50 text-slate-400 text-sm">
+            ↓
+          </div>
+        </div>
+      </section>
+
+      {/* ── Content ── */}
+      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+        {/* Section header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-700">Your interview preps</h2>
+          {activeCount > 0 && (
+            <span className="rounded-full border border-slate-300 bg-white px-3 py-0.5 text-xs font-medium text-slate-600">
+              {activeCount} active
+            </span>
+          )}
+        </div>
+
+        {jobs.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-16 text-center">
+            <p className="text-slate-500">No preparations yet.</p>
             <Link
               href="/jobs/new"
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
+              className="mt-5 inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
               style={{ background: "var(--brand-teal)" }}
             >
-              <span className="text-base leading-none">+</span> New prep
+              Create your first prep
             </Link>
           </div>
-        </section>
-
-        <section>
-          {jobs.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
-              <p className="text-slate-500">No preparations yet.</p>
-              <Link
-                href="/jobs/new"
-                className="mt-4 inline-flex items-center gap-1 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
-                style={{ background: "var(--brand-teal)" }}
-              >
-                Create your first prep
-              </Link>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {jobs.map((job) => (
-                <JobCard key={job.id} job={job} />
-              ))}
-            </div>
-          )}
-        </section>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {jobs.map((job, i) => (
+              <JobCard key={job.id} job={job} accent={ACCENTS[i % ACCENTS.length]} />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
 }
 
-// ── Job Card ──────────────────────────────────────────────────────────────────
+// ── Job Card ───────────────────────────────────────────────────────────────────
 
 function JobCard({
   job,
+  accent,
 }: {
-  job: {
-    id: string;
-    name: string;
-    description?: string;
-    setupProfile?: { roleTitle: string; seniority: string };
-    sessionCount: number;
-    totalQuestionsAttempted: number;
-    lastOpenedAt: Date;
-    lastPracticedAt?: Date;
-    createdAt: Date;
-  };
+  job: JobWithStats;
+  accent: { border: string; avatar: string; btn: string; ring: string };
 }) {
-  async function handleSelectJob() {
+  async function handleSelect() {
     "use server";
     await setCurrentJob(job.id);
     redirect("/practice");
   }
 
-  return (
-    <article className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md">
-      <form action={handleSelectJob} className="flex-1">
-        <button type="submit" className="w-full text-left">
-          <h3 className="font-semibold text-slate-900">{job.name}</h3>
-          {job.setupProfile && (
-            <p className="mt-0.5 text-sm text-slate-500">
-              {job.setupProfile.roleTitle} · {job.setupProfile.seniority}
-            </p>
-          )}
-          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-lg bg-slate-50 py-2">
-              <div className="text-lg font-bold text-slate-900">{job.sessionCount}</div>
-              <div className="text-xs text-slate-500">Sessions</div>
-            </div>
-            <div className="rounded-lg bg-slate-50 py-2">
-              <div className="text-lg font-bold text-slate-900">{job.totalQuestionsAttempted}</div>
-              <div className="text-xs text-slate-500">Answers</div>
-            </div>
-            <div className="rounded-lg bg-slate-50 py-2">
-              <div className="text-xs font-semibold text-slate-900">
-                {job.lastPracticedAt ? formatDate(job.lastPracticedAt) : "—"}
-              </div>
-              <div className="text-xs text-slate-500">Last practice</div>
-            </div>
-          </div>
-        </button>
-      </form>
+  const completionPct =
+    job.totalQuestionsAvailable > 0
+      ? Math.round((job.totalQuestionsAttempted / job.totalQuestionsAvailable) * 100)
+      : 0;
 
-      <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
-        <Link
-          href="/dashboard"
-          className="flex-1 rounded-lg border border-slate-200 py-2 text-center text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/feedback"
-          className="flex-1 rounded-lg py-2 text-center text-sm font-medium text-white transition hover:opacity-90"
-          style={{ background: "var(--brand-teal)" }}
-        >
-          Feedback
-        </Link>
+  const initial = (job.companyName || job.roleTitle || "?")[0].toUpperCase();
+
+  const STATUS_LABEL: Record<JobWithStats["status"], string> = {
+    active:        "Active",
+    just_started:  "Just started",
+    new:           "New",
+  };
+  const STATUS_STYLE: Record<JobWithStats["status"], string> = {
+    active:       "bg-cyan-50 text-cyan-700 border border-cyan-200",
+    just_started: "bg-amber-50 text-amber-700 border border-amber-200",
+    new:          "bg-slate-100 text-slate-500 border border-slate-200",
+  };
+
+  return (
+    <article
+      className="flex flex-col rounded-2xl bg-white shadow-sm overflow-hidden"
+      style={{ borderTop: `3px solid ${accent.border}` }}
+    >
+      {/* Card header */}
+      <div className="flex items-start justify-between p-5 pb-3">
+        <div className="flex items-center gap-3">
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white"
+            style={{ backgroundColor: accent.avatar }}
+          >
+            {initial}
+          </span>
+          <div>
+            {job.companyName && (
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                {job.companyName}
+              </p>
+            )}
+            <h3 className="text-[15px] font-bold leading-tight text-slate-900">
+              {job.roleTitle}
+            </h3>
+          </div>
+        </div>
+        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[job.status]}`}>
+          {STATUS_LABEL[job.status]}
+        </span>
+      </div>
+
+      {/* Skill tags */}
+      {job.skillTags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 px-5 pb-3">
+          {job.skillTags.map((t) => (
+            <SkillTagPill key={t.label} tag={t} />
+          ))}
+        </div>
+      )}
+
+      {/* Progress row */}
+      <div className="flex items-center gap-4 px-5 pb-4">
+        <div className="flex-1 min-w-0">
+          <div className="mb-2 flex items-baseline justify-between text-xs text-slate-500">
+            <span>
+              {job.totalQuestionsAttempted} of {job.totalQuestionsAvailable || "—"} questions
+            </span>
+            <span className="font-semibold text-slate-700">{completionPct}%</span>
+          </div>
+          {/* Progress bar */}
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${completionPct}%`, backgroundColor: accent.border }}
+            />
+          </div>
+        </div>
+
+        {/* Circular match score */}
+        {job.matchScore !== undefined ? (
+          <CircularProgress pct={job.matchScore} color={accent.ring} />
+        ) : (
+          <div className="h-14 w-14 flex items-center justify-center rounded-full bg-slate-50 border-2 border-dashed border-slate-200">
+            <span className="text-[10px] text-slate-400 text-center leading-tight">No<br/>score</span>
+          </div>
+        )}
+      </div>
+
+      {/* Action button */}
+      <div className="mt-auto px-4 pb-4">
+        <form action={handleSelect}>
+          <button
+            type="submit"
+            className="w-full rounded-xl py-2.5 text-sm font-bold text-white transition hover:opacity-90 active:scale-[0.98]"
+            style={{ backgroundColor: accent.btn }}
+          >
+            {job.status === "active" ? "Continue →" : "Start practice →"}
+          </button>
+        </form>
       </div>
     </article>
   );
@@ -188,9 +321,7 @@ async function LandingPage() {
       {/* ── Nav ── */}
       <header className="sticky top-0 z-50 border-b border-white/5 backdrop-blur-md" style={{ background: "rgba(11,31,58,0.85)" }}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-lg font-bold tracking-tight" style={{ color: "var(--brand-teal)" }}>
-            RoleReady
-          </span>
+          <span className="text-lg font-bold tracking-tight text-cyan-400">PrepAI</span>
           <form
             action={async () => {
               "use server";
@@ -209,23 +340,16 @@ async function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-28 text-center">
-        {/* Background glow blobs */}
         <div
           className="pointer-events-none absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20 blur-3xl"
           style={{ width: 600, height: 600, background: "radial-gradient(circle, #0E7C86 0%, transparent 70%)" }}
         />
-        <div
-          className="pointer-events-none absolute right-0 top-0 rounded-full opacity-10 blur-3xl"
-          style={{ width: 400, height: 400, background: "radial-gradient(circle, #F4BB42 0%, transparent 70%)" }}
-        />
 
-        {/* Badge */}
         <div className="animate-fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm backdrop-blur">
           <span className="animate-pulse-glow h-2 w-2 rounded-full" style={{ background: "var(--brand-teal)" }} />
           <span className="text-white/70">AI-Powered Interview Coach</span>
         </div>
 
-        {/* Headline */}
         <h1
           className="animate-fade-up max-w-3xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl md:text-7xl"
           style={{ animationDelay: "0.1s" }}
@@ -234,17 +358,15 @@ async function LandingPage() {
           <span style={{ color: "var(--brand-teal)" }}>you actually want.</span>
         </h1>
 
-        {/* Subtext */}
         <p
           className="animate-fade-up mt-6 max-w-xl text-lg leading-relaxed text-white/60"
           style={{ animationDelay: "0.2s" }}
         >
-          Upload your resume and job description. RoleReady spots every gap,
+          Upload your resume and job description. PrepAI spots every gap,
           generates role-specific questions, and coaches your answers with
           real-time STAR feedback.
         </p>
 
-        {/* CTAs */}
         <div
           className="animate-fade-up mt-10 flex flex-wrap items-center justify-center gap-4"
           style={{ animationDelay: "0.3s" }}
@@ -257,8 +379,8 @@ async function LandingPage() {
           >
             <button
               type="submit"
-              className="rounded-xl px-7 py-3.5 text-base font-semibold text-slate-950 shadow-lg transition hover:opacity-90 hover:shadow-xl"
-              style={{ background: "var(--brand-teal)", color: "#fff" }}
+              className="rounded-xl px-7 py-3.5 text-base font-semibold text-white shadow-lg transition hover:opacity-90"
+              style={{ background: "var(--brand-teal)" }}
             >
               Get started free →
             </button>
@@ -270,8 +392,6 @@ async function LandingPage() {
             See how it works ↓
           </a>
         </div>
-
-        {/* Social proof */}
         <p className="animate-fade-up mt-8 text-sm text-white/30" style={{ animationDelay: "0.4s" }}>
           Free to start · No credit card required
         </p>
@@ -286,43 +406,16 @@ async function LandingPage() {
           <h2 className="mb-16 text-center text-3xl font-bold tracking-tight sm:text-4xl">
             Four steps from upload to offer.
           </h2>
-
-          <div className="relative grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Connector line (desktop) */}
-            <div
-              className="pointer-events-none absolute left-0 right-0 top-8 hidden h-px lg:block"
-              style={{ background: "linear-gradient(90deg, transparent, rgba(14,124,134,0.4), transparent)" }}
-            />
-
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              {
-                step: "01",
-                title: "Upload Resume & JD",
-                desc: "Paste or upload your resume and the job description for any role you're targeting.",
-                color: "var(--brand-teal)",
-              },
-              {
-                step: "02",
-                title: "Gap Analysis",
-                desc: "AI maps your resume against the JD — showing match score, missing skills, and resume rewrites.",
-                color: "var(--brand-amber)",
-              },
-              {
-                step: "03",
-                title: "Practice Questions",
-                desc: "10 role-specific questions generated from your actual experience and the JD.",
-                color: "var(--brand-teal)",
-              },
-              {
-                step: "04",
-                title: "STAR Feedback",
-                desc: "Answer by typing or speaking. Get scored on relevance, clarity, depth, and STAR structure.",
-                color: "var(--brand-amber)",
-              },
+              { step: "01", title: "Upload Resume & JD",    desc: "Paste or upload your resume and the job description for any role you're targeting.", color: "var(--brand-teal)" },
+              { step: "02", title: "Gap Analysis",          desc: "AI maps your resume against the JD — showing match score, missing skills, and resume rewrites.", color: "var(--brand-amber)" },
+              { step: "03", title: "Practice Questions",    desc: "10 role-specific questions generated from your actual experience and the JD.", color: "var(--brand-teal)" },
+              { step: "04", title: "STAR Feedback",         desc: "Answer by typing or speaking. Get scored on relevance, clarity, depth, and STAR structure.", color: "var(--brand-amber)" },
             ].map(({ step, title, desc, color }) => (
-              <div key={step} className="relative flex flex-col items-center text-center">
+              <div key={step} className="flex flex-col items-center text-center">
                 <div
-                  className="z-10 mb-5 flex h-16 w-16 items-center justify-center rounded-2xl text-xl font-bold"
+                  className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl text-xl font-bold"
                   style={{ background: `${color}18`, border: `1.5px solid ${color}40`, color }}
                 >
                   {step}
@@ -335,102 +428,10 @@ async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Feature highlights ── */}
-      <section className="border-t border-white/5 px-6 py-24" style={{ background: "var(--brand-charcoal)" }}>
-        <div className="mx-auto max-w-5xl">
-          <p className="mb-2 text-center text-sm font-medium uppercase tracking-widest" style={{ color: "var(--brand-amber)" }}>
-            What you get
-          </p>
-          <h2 className="mb-16 text-center text-3xl font-bold tracking-tight sm:text-4xl">
-            Built for serious candidates.
-          </h2>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                icon: "◎",
-                title: "Match Score",
-                desc: "See exactly how well your resume matches the role — down to missing keywords and impact gaps.",
-                accent: "var(--brand-teal)",
-              },
-              {
-                icon: "✦",
-                title: "Smart Questions",
-                desc: "Questions tailored to your specific background and the JD, not generic prep lists.",
-                accent: "var(--brand-amber)",
-              },
-              {
-                icon: "◈",
-                title: "STAR Coaching",
-                desc: "Real-time feedback on Situation, Task, Action, Result — with evidence and a personalized coach tip.",
-                accent: "var(--brand-teal)",
-              },
-              {
-                icon: "▲",
-                title: "Resume Rewrites",
-                desc: "Concrete bullet rewrites and additions that close the gap between your resume and the role.",
-                accent: "var(--brand-amber)",
-              },
-              {
-                icon: "◉",
-                title: "Multiple Preps",
-                desc: "Run separate preparations for every role you're targeting — all tracked independently.",
-                accent: "var(--brand-teal)",
-              },
-              {
-                icon: "◐",
-                title: "Progress Tracking",
-                desc: "Session history, score trends, and STAR completion rates — so you can see yourself improve.",
-                accent: "var(--brand-amber)",
-              },
-            ].map(({ icon, title, desc, accent }) => (
-              <div
-                key={title}
-                className="rounded-2xl border border-white/5 p-6 transition hover:border-white/10 hover:bg-white/5"
-              >
-                <div className="mb-4 text-2xl" style={{ color: accent }}>
-                  {icon}
-                </div>
-                <h3 className="mb-2 text-base font-semibold text-white">{title}</h3>
-                <p className="text-sm leading-relaxed text-white/50">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Final CTA ── */}
-      <section className="border-t border-white/5 px-6 py-28 text-center">
-        <div className="mx-auto max-w-xl">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Ready to close the gap?
-          </h2>
-          <p className="mt-4 text-lg text-white/50">
-            Free to start. No credit card. Your first prep in under 5 minutes.
-          </p>
-          <form
-            className="mt-10"
-            action={async () => {
-              "use server";
-              await signIn("google", { redirectTo: "/" }, { prompt: "select_account" });
-            }}
-          >
-            <button
-              type="submit"
-              className="rounded-xl px-8 py-4 text-base font-semibold text-white shadow-lg transition hover:opacity-90 hover:shadow-xl"
-              style={{ background: "var(--brand-teal)" }}
-            >
-              Start your first prep →
-            </button>
-          </form>
-        </div>
-      </section>
-
       {/* ── Footer ── */}
       <footer className="border-t border-white/5 px-6 py-8 text-center text-sm text-white/25">
-        © {new Date().getFullYear()} RoleReady · Built with AI coaching
+        © {new Date().getFullYear()} PrepAI · AI-powered interview coaching
       </footer>
-
     </div>
   );
 }

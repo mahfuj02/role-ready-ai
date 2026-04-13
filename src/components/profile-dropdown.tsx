@@ -24,28 +24,30 @@ export function ProfileDropdown({ displayName, initials, signOutAction }: Profil
   }, []);
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-full border border-cyan-900/60 bg-[#09284f] px-3 py-1.5 text-sm text-slate-200 transition hover:border-cyan-700/60 hover:bg-[#0a3060]"
-      >
-        <span className="px-1">{displayName}</span>
-        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-600 bg-[#08375b] text-xs font-semibold text-cyan-200">
+    <div ref={ref} className="relative flex items-center gap-1">
+      {/* Name + avatar pill (non-interactive display) */}
+      <div className="flex items-center gap-2 rounded-full border border-cyan-900/60 bg-[#09284f] px-3 py-1.5 text-sm text-slate-200">
+        <span className="pl-1 pr-0.5">{displayName}</span>
+        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-600 bg-[#08375b] text-xs font-bold text-cyan-200">
           {initials}
         </span>
-        <svg
-          className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2.5}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+      </div>
+
+      {/* Separator dot */}
+      <span className="mx-0.5 text-slate-600">·</span>
+
+      {/* Three-dots trigger */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-900/50 bg-[#09284f] text-slate-300 transition hover:bg-[#0a3060] hover:text-white"
+        aria-label="More options"
+      >
+        <span className="text-base leading-none tracking-widest">···</span>
       </button>
 
+      {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-cyan-900/50 bg-[#09284f] shadow-xl shadow-black/30">
+        <div className="absolute right-0 top-10 z-50 w-44 overflow-hidden rounded-xl border border-cyan-900/50 bg-[#09284f] shadow-xl shadow-black/30">
           <Link
             href="/settings"
             onClick={() => setOpen(false)}
