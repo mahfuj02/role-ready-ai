@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-Command pg_ctl -ErrorAction SilentlyContinue\")",
+      "Read(//c/Program Files/**)"
+    ]
+  }
+}

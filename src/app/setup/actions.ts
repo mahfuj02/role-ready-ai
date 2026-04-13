@@ -80,7 +80,7 @@ export async function saveSetupProfile(formData: FormData) {
   // Generate gap analysis in the background — don't block if it fails
   generateAndSaveGapAnalysis(setupProfileId).catch(() => {});
 
-  redirect("/setup?saved=1");
+  redirect(`/gap-analysis?job=${dbUser.currentJobId ?? ""}`);
 }
 
 export async function generatePracticeSession() {
