@@ -3,6 +3,8 @@ import { auth, signIn, signOut } from "@/auth";
 import { getUserJobs, setCurrentJob, type JobWithStats, type SkillTag } from "@/lib/jobs/actions";
 import { redirect } from "next/navigation";
 import { ProfileDropdown } from "@/components/profile-dropdown";
+import { Logo } from "@/components/logo";
+import { DeleteJobButton } from "@/components/delete-job-button";
 
 // ── Circular progress donut ────────────────────────────────────────────────────
 
@@ -91,14 +93,7 @@ export default async function Home() {
       <header className="sticky top-0 z-50 border-b border-cyan-900/40 bg-[#071f3f]">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-3.5">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-700 text-cyan-100 text-base">
-              ◉
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-white">
-              Prep<span className="text-cyan-400">AI</span>
-            </span>
-          </div>
+          <Logo />
 
           {/* Profile */}
           <ProfileDropdown
@@ -254,9 +249,13 @@ function JobCard({
             </h3>
           </div>
         </div>
-        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[job.status]}`}>
-          {STATUS_LABEL[job.status]}
-        </span>
+        {/* Status badge + delete */}
+        <div className="flex items-center gap-1.5">
+          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[job.status]}`}>
+            {STATUS_LABEL[job.status]}
+          </span>
+          <DeleteJobButton jobId={job.id} jobName={job.name} />
+        </div>
       </div>
 
       {/* Skill tags */}
@@ -296,15 +295,27 @@ function JobCard({
         )}
       </div>
 
-      {/* Action button */}
-      <div className="mt-auto px-4 pb-4">
-        <form action={handleSelect}>
+      {/* Action buttons */}
+      <div className="mt-auto flex gap-2 px-4 pb-4">
+        {/* Analysis — outline, same colour reversed */}
+        <Link
+          href={`/gap-analysis/edit?job=${job.id}`}
+          className="flex flex-1 items-center justify-center gap-1 rounded-xl border py-2.5 text-sm font-bold transition hover:opacity-80 active:scale-[0.98]"
+          style={{ borderColor: accent.btn, color: accent.btn, background: "#fff" }}
+        >
+          Analysis
+          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="8" x2="13" y2="8" /><polyline points="9 4 13 8 9 12" />
+          </svg>
+        </Link>
+        {/* Practice — filled */}
+        <form action={handleSelect} className="flex-1">
           <button
             type="submit"
             className="w-full rounded-xl py-2.5 text-sm font-bold text-white transition hover:opacity-90 active:scale-[0.98]"
             style={{ backgroundColor: accent.btn }}
           >
-            {job.status === "active" ? "Continue →" : "Start practice →"}
+            {job.status === "active" ? "Continue →" : "Practice →"}
           </button>
         </form>
       </div>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
 import { ProfileDropdown } from "@/components/profile-dropdown";
+import { Logo } from "@/components/logo";
 import { NewPrepForm } from "./new-prep-form";
 
 type PageProps = {
@@ -43,13 +44,7 @@ export default async function NewPrepPage({ searchParams }: PageProps) {
       {/* ── Header ── */}
       <header className="sticky top-0 z-50 border-b border-cyan-900/40 bg-[#071f3f]">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-3">
-          {/* Left: logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-700 text-cyan-100 text-sm">◉</div>
-            <span className="text-xl font-bold tracking-tight text-white">
-              Prep<span className="text-cyan-400">AI</span>
-            </span>
-          </div>
+          <Logo />
 
           {/* Center: step label */}
           <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400">

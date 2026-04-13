@@ -30,5 +30,6 @@ export async function submitAnswerAction(formData: FormData) {
     redirect(`/practice?session=${practiceSessionId}&error=not-found`);
   }
 
-  redirect(`/practice?session=${practiceSessionId}&saved=${questionId}`);
+  // Redirect back to the same question — page re-renders with feedback loaded
+  redirect(`/practice?session=${practiceSessionId}&q=${questionId}`);
 }

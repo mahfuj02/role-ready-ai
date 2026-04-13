@@ -24,25 +24,17 @@ export function ProfileDropdown({ displayName, initials, signOutAction }: Profil
   }, []);
 
   return (
-    <div ref={ref} className="relative flex items-center gap-1">
-      {/* Name + avatar pill (non-interactive display) */}
-      <div className="flex items-center gap-2 rounded-full border border-cyan-900/60 bg-[#09284f] px-3 py-1.5 text-sm text-slate-200">
+    <div ref={ref} className="relative">
+      {/* Pill is the trigger */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-2 rounded-full border border-cyan-900/60 bg-[#09284f] px-3 py-1.5 text-sm text-slate-200 transition hover:bg-[#0a3060] hover:border-cyan-700/60"
+        aria-label="Account menu"
+      >
         <span className="pl-1 pr-0.5">{displayName}</span>
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-600 bg-[#08375b] text-xs font-bold text-cyan-200">
           {initials}
         </span>
-      </div>
-
-      {/* Separator dot */}
-      <span className="mx-0.5 text-slate-600">·</span>
-
-      {/* Three-dots trigger */}
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-900/50 bg-[#09284f] text-slate-300 transition hover:bg-[#0a3060] hover:text-white"
-        aria-label="More options"
-      >
-        <span className="text-base leading-none tracking-widest">···</span>
       </button>
 
       {/* Dropdown */}
