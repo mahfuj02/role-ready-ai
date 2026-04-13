@@ -61,11 +61,19 @@ export function NewPrepForm({ validationError }: { validationError?: boolean }) 
 
   const [isPending, startTransition] = useTransition();
 
-  const isComplete =
-    roleTitle.trim().length >= 2 &&
-    seniority.length > 0 &&
-    resumeText.trim().length >= 100 &&
-    jdText.trim().length >= 100;
+  const hasResume   = resumeText.trim().length >= 100;
+  const hasJd       = jdText.trim().length >= 100;
+  const hasRole     = roleTitle.trim().length >= 2;
+  const hasSeniority = seniority.length > 0;
+  const isComplete  = hasRole && hasSeniority && hasResume && hasJd;
+
+  function missingHint() {
+    if (!hasRole)      return "Add a target role to continue";
+    if (!hasResume)    return "Paste or upload your resume to continue";
+    if (!hasJd)        return "Paste the job description to continue";
+    if (!hasSeniority) return "Select your position level to continue";
+    return "Ready to analyse";
+  }
 
   // ── File handling ──────────────────────────────────────────────
 
@@ -143,7 +151,7 @@ export function NewPrepForm({ validationError }: { validationError?: boolean }) 
         </div>
       )}
 
-      <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
+      <form id="new-prep-form" ref={formRef} onSubmit={handleSubmit} className="space-y-5 pb-28">
 
         {/* ── JOB DETAILS ── */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -295,35 +303,66 @@ export function NewPrepForm({ validationError }: { validationError?: boolean }) 
           </div>
         </div>
 
-        {/* ── Footer row ── */}
-        <div className="flex items-center justify-between pt-1">
-          <p className="flex items-center gap-1.5 text-xs text-slate-400">
-            <span className="text-teal-500">🔒</span>
-            Private &amp; secure — your data is never shared
-          </p>
-
-          <button
-            type="submit"
-            disabled={!isComplete || isPending}
-            className={[
-              "inline-flex items-center gap-2 rounded-xl px-7 py-3 text-sm font-bold text-white shadow-sm transition",
-              isComplete && !isPending
-                ? "animate-shimmer cursor-pointer hover:opacity-90 active:scale-[0.98]"
-                : "bg-slate-300 cursor-not-allowed opacity-60",
-            ].join(" ")}
-          >
-            {isPending ? (
-              <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Analysing…
-              </>
-            ) : (
-              "Analyse & continue →"
-            )}
-          </button>
-        </div>
-
       </form>
+
+      {/* ── Sticky bottom action bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md shadow-lg">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-6 py-3.5">
+
+          {/* Left: status hint */}
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="shrink-0 text-teal-500 text-sm">🔒</span>
+            <span className="text-xs text-slate-400 truncate">
+              {isComplete ? "All set — ready to analyse" : missingHint()}
+            </span>
+          </div>
+
+          {/* Right: field pills + button */}
+          <div className="flex shrink-0 items-center gap-3">
+            {/* Mini progress pills */}
+            <div className="hidden sm:flex items-center gap-1.5">
+              {[
+                { ok: hasRole,      label: "Role" },
+                { ok: hasResume,    label: "Resume" },
+                { ok: hasJd,        label: "JD" },
+                { ok: hasSeniority, label: "Level" },
+              ].map(({ ok, label }) => (
+                <span
+                  key={label}
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                    ok
+                      ? "bg-teal-100 text-teal-700"
+                      : "bg-slate-100 text-slate-400"
+                  }`}
+                >
+                  {ok ? "✓ " : ""}{label}
+                </span>
+              ))}
+            </div>
+
+            <button
+              type="submit"
+              form="new-prep-form"
+              disabled={!isComplete || isPending}
+              className={[
+                "inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold text-white shadow-sm transition",
+                isComplete && !isPending
+                  ? "animate-shimmer cursor-pointer hover:opacity-90 active:scale-[0.98]"
+                  : "bg-slate-300 cursor-not-allowed opacity-50",
+              ].join(" ")}
+            >
+              {isPending ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Analysing…
+                </>
+              ) : (
+                "Analyse & continue →"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
