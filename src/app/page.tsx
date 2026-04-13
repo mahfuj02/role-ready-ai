@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
 import { getUserJobs, setCurrentJob } from "@/lib/jobs/actions";
 import { redirect } from "next/navigation";
+import { ProfileDropdown } from "@/components/profile-dropdown";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -47,20 +48,11 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 rounded-full border border-cyan-900/60 bg-[#09284f] px-3 py-1.5 text-sm text-slate-200">
-            <span className="px-2">{displayName}</span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-600 bg-[#08375b] text-cyan-200">
-              {initials}
-            </span>
-            <form action={handleSignOut}>
-              <button
-                type="submit"
-                className="rounded-full px-2 py-1 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white"
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
+          <ProfileDropdown
+            displayName={displayName}
+            initials={initials}
+            signOutAction={handleSignOut}
+          />
         </div>
       </header>
 
