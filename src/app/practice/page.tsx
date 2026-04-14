@@ -402,7 +402,7 @@ export default async function PracticePage({ searchParams }: Props) {
             </Link>
           ) : feedback ? (
             <Link
-              href={`/`}
+              href={`/session?id=${practiceSession.id}`}
               className="flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
               style={{ background: "var(--brand-teal)" }}
             >
