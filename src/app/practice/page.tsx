@@ -245,8 +245,8 @@ export default async function PracticePage({ searchParams }: Props) {
         {/* ── Two-column layout ── */}
         <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
 
-          {/* ── Left: question + input ── */}
-          <div className="space-y-4">
+          {/* ── Left: question + input — key forces remount + animation on every question change ── */}
+          <div key={currentQ.id} className="animate-slide-in space-y-4">
 
             {/* Question card */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -271,6 +271,7 @@ export default async function PracticePage({ searchParams }: Props) {
             {/* Answer input */}
             <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
               <PracticeAnswerInput
+                key={currentQ.id}
                 sessionId={practiceSession.id}
                 questionId={currentQ.id}
                 existingAnswer={existingAnswer?.text ?? null}
