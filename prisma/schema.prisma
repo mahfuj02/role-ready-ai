@@ -24,6 +24,7 @@ enum Difficulty {
 
 enum AiProvider {
   GEMINI
+  GROQ
   MOCK
 }
 

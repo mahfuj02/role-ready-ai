@@ -5,70 +5,54 @@ import type {
   StarResult,
   StarWithSource,
 } from "@/lib/ai/types";
-import { detectGeminiStar, evaluateGeminiAnswer } from "@/lib/ai/gemini-answer-evaluator";
-import { detectMockStar, evaluateMockAnswer } from "@/lib/ai/mock-answer-evaluator";
+import { evaluateGroqAnswer, detectGroqStar }     from "@/lib/ai/groq-answer-evaluator";
+import { evaluateGeminiAnswer, detectGeminiStar } from "@/lib/ai/gemini-answer-evaluator";
+import { evaluateMockAnswer, detectMockStar }     from "@/lib/ai/mock-answer-evaluator";
 
 export async function evaluateAnswer(input: EvaluateAnswerInput): Promise<EvaluationResult> {
-  const evaluated = await evaluateAnswerWithSource(input);
-  return evaluated.result;
+  return (await evaluateAnswerWithSource(input)).result;
 }
 
-export async function evaluateAnswerWithSource(
-  input: EvaluateAnswerInput,
-): Promise<EvaluationWithSource> {
-  if (process.env.GEMINI_API_KEY) {
+export async function evaluateAnswerWithSource(input: EvaluateAnswerInput): Promise<EvaluationWithSource> {
+  if (process.env.GROQ_API_KEY) {
     try {
-      return {
-        provider: "GEMINI",
-        result: await evaluateGeminiAnswer(input),
-      };
-    } catch (error) {
-      console.error(
-        "[GEMINI_FALLBACK] Evaluation failed:",
-        error instanceof Error ? error.message : String(error),
-      );
-      return {
-        provider: "MOCK",
-        result: evaluateMockAnswer(input),
-      };
+      return { provider: "GEMINI", result: await evaluateGroqAnswer(input) };
+    } catch (e) {
+      console.error("[GROQ_FALLBACK] answer evaluation failed:", e);
     }
   }
 
-  return {
-    provider: "MOCK",
-    result: evaluateMockAnswer(input),
-  };
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      return { provider: "GEMINI", result: await evaluateGeminiAnswer(input) };
+    } catch (e) {
+      console.error("[GEMINI_FALLBACK] answer evaluation failed:", e);
+    }
+  }
+
+  return { provider: "MOCK", result: evaluateMockAnswer(input) };
 }
 
 export async function detectStar(answerText: string, questionText: string): Promise<StarResult> {
-  const detected = await detectStarWithSource(answerText, questionText);
-  return detected.result;
+  return (await detectStarWithSource(answerText, questionText)).result;
 }
 
-export async function detectStarWithSource(
-  answerText: string,
-  questionText: string,
-): Promise<StarWithSource> {
-  if (process.env.GEMINI_API_KEY) {
+export async function detectStarWithSource(answerText: string, questionText: string): Promise<StarWithSource> {
+  if (process.env.GROQ_API_KEY) {
     try {
-      return {
-        provider: "GEMINI",
-        result: await detectGeminiStar(answerText, questionText),
-      };
-    } catch (error) {
-      console.error(
-        "[GEMINI_FALLBACK] STAR detection failed:",
-        error instanceof Error ? error.message : String(error),
-      );
-      return {
-        provider: "MOCK",
-        result: detectMockStar(answerText),
-      };
+      return { provider: "GEMINI", result: await detectGroqStar(answerText, questionText) };
+    } catch (e) {
+      console.error("[GROQ_FALLBACK] STAR detection failed:", e);
     }
   }
 
-  return {
-    provider: "MOCK",
-    result: detectMockStar(answerText),
-  };
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      return { provider: "GEMINI", result: await detectGeminiStar(answerText, questionText) };
+    } catch (e) {
+      console.error("[GEMINI_FALLBACK] STAR detection failed:", e);
+    }
+  }
+
+  return { provider: "MOCK", result: detectMockStar(answerText) };
 }
