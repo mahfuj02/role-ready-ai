@@ -33,50 +33,83 @@ function scoreColor(pct: number) {
   return "text-red-500";
 }
 
-// ── STAR part row ─────────────────────────────────────────────────────────────
+// ── STAR circles row ──────────────────────────────────────────────────────────
 
-function StarPart({
-  letter, label, present, evidence,
-}: { letter: string; label: string; present: boolean; evidence: string }) {
+type StarAnalysisShape = {
+  situation: boolean; situationEvidence: string;
+  task: boolean;      taskEvidence: string;
+  action: boolean;    actionEvidence: string;
+  result: boolean;    resultEvidence: string;
+  coachTip: string;
+};
+
+function StarCircles({ star }: { star: StarAnalysisShape }) {
+  const parts = [
+    { letter: "S", label: "Situation", present: star.situation, evidence: star.situationEvidence },
+    { letter: "T", label: "Task",      present: star.task,      evidence: star.taskEvidence },
+    { letter: "A", label: "Action",    present: star.action,    evidence: star.actionEvidence },
+    { letter: "R", label: "Result",    present: star.result,    evidence: star.resultEvidence },
+  ];
+
   return (
-    <div className="flex gap-3">
-      <div className={[
-        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold",
-        present ? "bg-teal-500 text-white" : "bg-slate-200 text-slate-400",
-      ].join(" ")}>
-        {letter}
+    <div className="mb-4">
+      {/* Circle row */}
+      <div className="flex items-center justify-around">
+        {parts.map(({ letter, label, present }) => (
+          <div key={letter} className="flex flex-col items-center gap-1.5">
+            <div className={[
+              "flex h-11 w-11 items-center justify-center rounded-full text-sm font-extrabold shadow-sm",
+              present ? "bg-green-500 text-white" : "bg-red-100 text-red-500 ring-2 ring-red-200",
+            ].join(" ")}>
+              {letter}
+            </div>
+            <span className={`text-[10px] font-semibold ${present ? "text-green-600" : "text-red-400"}`}>
+              {label}
+            </span>
+          </div>
+        ))}
       </div>
-      <div className="min-w-0 pt-0.5">
-        <p className={`text-xs font-bold ${present ? "text-slate-700" : "text-slate-400"}`}>
-          {label}
-          {present
-            ? <span className="ml-1.5 font-normal text-slate-500">✓ found</span>
-            : <span className="ml-1.5 font-normal text-red-400">✗ missing</span>}
-        </p>
-        {evidence && (
-          <p className="mt-0.5 text-xs leading-relaxed text-slate-500 italic">{evidence}</p>
-        )}
-      </div>
+
+      {/* Evidence for missing parts */}
+      {parts.filter(p => !p.present && p.evidence).map(({ letter, label, evidence }) => (
+        <div key={letter} className="mt-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2">
+          <p className="text-[10px] font-bold text-red-500 uppercase tracking-wide mb-0.5">{label} missing</p>
+          <p className="text-xs leading-relaxed text-red-700">{evidence}</p>
+        </div>
+      ))}
+
+      {/* Coach tip */}
+      {star.coachTip && (
+        <div className="mt-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+          <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wide mb-0.5">Coach tip</p>
+          <p className="text-xs leading-relaxed text-amber-800">{star.coachTip}</p>
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Score bar ─────────────────────────────────────────────────────────────────
+// ── Score row with specific reason ────────────────────────────────────────────
 
-function ScoreBar({ label, score }: { label: string; score: number }) {
+function ScoreRow({ label, score, why }: { label: string; score: number; why: string }) {
   const pct = toPercent(score);
+  const barColor =
+    pct >= 80 ? "#22c55e" :
+    pct >= 60 ? "#14b8a6" :
+    pct >= 40 ? "#f59e0b" : "#ef4444";
+
   return (
-    <div>
-      <div className="mb-1 flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-600">{label}</span>
-        <span className={`text-xs font-bold ${scoreColor(pct)}`}>{pct}%</span>
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-slate-700">{label}</span>
+        <span className={`text-xs font-extrabold ${scoreColor(pct)}`}>{pct}%</span>
       </div>
       <div className="h-1.5 w-full rounded-full bg-slate-100">
-        <div
-          className="h-1.5 rounded-full transition-all"
-          style={{ width: `${pct}%`, background: "var(--brand-teal)" }}
-        />
+        <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, background: barColor }} />
       </div>
+      {why && (
+        <p className="text-[11px] leading-relaxed text-slate-500 pt-0.5">{why}</p>
+      )}
     </div>
   );
 }
@@ -288,58 +321,61 @@ export default async function PracticePage({ searchParams }: Props) {
             {/* STAR / score feedback */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-800">
-                  {isBehavioral ? "STAR feedback" : "Answer feedback"}
-                </h2>
-                {!feedback && (
-                  <span className="text-xs text-slate-400">After you answer</span>
-                )}
+                <h2 className="text-sm font-bold text-slate-800">Answer feedback</h2>
+                {!feedback && <span className="text-xs text-slate-400">After you answer</span>}
               </div>
 
               {!feedback ? (
-                /* Placeholder */
                 <div className="flex flex-col items-center gap-3 py-6 text-center">
                   <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-300">
                     {isBehavioral ? "✦" : "◎"}
                   </span>
-                  <p className="text-sm font-semibold text-slate-500">
-                    {isBehavioral ? "STAR analysis appears here" : "Score breakdown appears here"}
-                  </p>
+                  <p className="text-sm font-semibold text-slate-500">Feedback appears here</p>
                   <p className="text-xs leading-relaxed text-slate-400">
-                    Submit your answer and we&apos;ll break it down into{" "}
+                    Submit your answer and we&apos;ll give you{" "}
                     {isBehavioral
-                      ? "Situation, Task, Action and Result — with a score and specific tips for each."
-                      : "Relevance, Clarity, Depth and Communication scores with improvement tips."}
+                      ? "STAR structure analysis and detailed scores."
+                      : "detailed scores with specific feedback."}
                   </p>
-                </div>
-              ) : isBehavioral && starAnalysis ? (
-                /* STAR breakdown */
-                <div className="space-y-4">
-                  <StarPart letter="S" label="Situation" present={starAnalysis.situation} evidence={starAnalysis.situationEvidence} />
-                  <StarPart letter="T" label="Task"      present={starAnalysis.task}      evidence={starAnalysis.taskEvidence} />
-                  <StarPart letter="A" label="Action"    present={starAnalysis.action}    evidence={starAnalysis.actionEvidence} />
-                  <StarPart letter="R" label="Result"    present={starAnalysis.result}    evidence={starAnalysis.resultEvidence} />
-                  {starAnalysis.coachTip && (
-                    <div className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-3">
-                      <p className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600 mb-1">Coach tip</p>
-                      <p className="text-xs leading-relaxed text-amber-800">{starAnalysis.coachTip}</p>
-                    </div>
-                  )}
                 </div>
               ) : (
-                /* Score bars for technical / fallback */
-                <div className="space-y-3">
-                  <ScoreBar label="Relevance"     score={feedback.relevance}     />
-                  <ScoreBar label="Clarity"       score={feedback.clarity}       />
-                  <ScoreBar label="Depth"         score={feedback.depth}         />
-                  <ScoreBar label="Communication" score={feedback.communication} />
+                <div className="space-y-4">
+
+                  {/* STAR circles — behavioural only */}
+                  {isBehavioral && starAnalysis && (
+                    <StarCircles star={starAnalysis} />
+                  )}
+
+                  {/* Divider between STAR and scores */}
+                  {isBehavioral && starAnalysis && (
+                    <div className="border-t border-slate-100" />
+                  )}
+
+                  {/* Score rows with specific reasons */}
+                  <div className="space-y-3">
+                    <ScoreRow label="Relevance"     score={feedback.relevance}     why={feedback.relevanceWhy} />
+                    <ScoreRow label="Clarity"       score={feedback.clarity}       why={feedback.clarityWhy} />
+                    <ScoreRow label="Depth"         score={feedback.depth}         why={feedback.depthWhy} />
+                    <ScoreRow label="Communication" score={feedback.communication} why={feedback.communicationWhy} />
+                  </div>
+
+                  {/* Improvement tips */}
                   {(feedback.tipOne || feedback.tipTwo) && (
-                    <div className="mt-3 rounded-xl border border-teal-100 bg-teal-50 px-3 py-3 space-y-1.5">
-                      <p className="text-[10px] font-extrabold uppercase tracking-widest text-teal-600">Tips</p>
+                    <div className="rounded-xl border border-teal-100 bg-teal-50 px-3 py-3 space-y-1.5">
+                      <p className="text-[10px] font-extrabold uppercase tracking-widest text-teal-600">How to improve</p>
                       {feedback.tipOne && <p className="text-xs leading-relaxed text-teal-800">• {feedback.tipOne}</p>}
                       {feedback.tipTwo && <p className="text-xs leading-relaxed text-teal-800">• {feedback.tipTwo}</p>}
                     </div>
                   )}
+
+                  {/* Model answer */}
+                  {feedback.improvedAnswer && (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                      <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-1.5">Model answer</p>
+                      <p className="text-xs leading-relaxed text-slate-600 whitespace-pre-line">{feedback.improvedAnswer}</p>
+                    </div>
+                  )}
+
                 </div>
               )}
             </div>
