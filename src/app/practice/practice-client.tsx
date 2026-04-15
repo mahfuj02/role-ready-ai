@@ -37,16 +37,17 @@ function VoiceInput({ onTranscript }: { onTranscript: (text: string) => void }) 
   const [error, setError]           = useState("");
   const [usesWhisper, setUsesWhisper] = useState(false);
 
-  const recognitionRef  = useRef<SpeechRecognition | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef  = useRef<any>(null);
   const recorderRef     = useRef<MediaRecorder | null>(null);
   const chunksRef       = useRef<Blob[]>([]);
   const accumulatedRef  = useRef("");
 
   // Detect Web Speech API support once on mount
   useEffect(() => {
-    const SR = (window as typeof window & { webkitSpeechRecognition?: typeof SpeechRecognition })
-      .SpeechRecognition ?? (window as typeof window & { webkitSpeechRecognition?: typeof SpeechRecognition })
-      .webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    const SR = w.SpeechRecognition ?? w.webkitSpeechRecognition;
     setUsesWhisper(!SR);
   }, []);
 
@@ -57,9 +58,9 @@ function VoiceInput({ onTranscript }: { onTranscript: (text: string) => void }) 
     setLiveText("");
     accumulatedRef.current = "";
 
-    const SR = (window as typeof window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition })
-      .SpeechRecognition ?? (window as typeof window & { webkitSpeechRecognition?: typeof SpeechRecognition })
-      .webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    const SR = w.SpeechRecognition ?? w.webkitSpeechRecognition;
     if (!SR) return;
 
     const recognition = new SR();
@@ -67,7 +68,8 @@ function VoiceInput({ onTranscript }: { onTranscript: (text: string) => void }) 
     recognition.interimResults  = true;
     recognition.lang            = "en-US";
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
       let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const t = event.results[i][0].transcript;
