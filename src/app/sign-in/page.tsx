@@ -6,7 +6,7 @@ type SignInPageProps = {
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams;
-  const callbackUrl = params.callbackUrl ?? "/setup";
+  const callbackUrl = params.callbackUrl ?? "/";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16 text-slate-100">

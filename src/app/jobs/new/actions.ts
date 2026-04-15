@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
@@ -71,9 +72,11 @@ export async function createNewPrep(formData: FormData) {
     select: { id: true },
   });
 
-  // Kick off gap analysis + question generation async — don't block redirect
-  generateAndSaveGapAnalysis(profile.id).catch(() => {});
-  createPracticeSessionFromLatestSetup(sessionUser.email).catch(() => {});
+  // Run after response is sent so the tasks aren't killed by the redirect
+  after(async () => {
+    await generateAndSaveGapAnalysis(profile.id).catch(() => {});
+    await createPracticeSessionFromLatestSetup(sessionUser.email!).catch(() => {});
+  });
 
   redirect(`/gap-analysis?job=${job.id}`);
 }

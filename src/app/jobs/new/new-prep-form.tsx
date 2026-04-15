@@ -8,6 +8,7 @@ const SENIORITY_LEVELS = ["Intern", "Junior", "Mid-level", "Senior", "Lead", "Pr
 type UploadState = "idle" | "loading" | "success" | "error";
 type ResumeMode = "upload" | "paste";
 type JdMode = "paste" | "url";
+type FetchState = "idle" | "loading" | "success" | "error";
 
 // ── Step indicator ─────────────────────────────────────────────────────────────
 
@@ -72,13 +73,15 @@ function CharHint({ len }: { len: number }) {
 export function NewPrepForm({ validationError }: { validationError?: boolean }) {
   const formRef = useRef<HTMLFormElement>(null);
 
-  // One ref per textarea that lives in the form
+  // One ref per textarea / input that lives in the form
   const resumeTextareaRef = useRef<HTMLTextAreaElement>(null);
   const jdTextareaRef     = useRef<HTMLTextAreaElement>(null);
+  const roleTitleRef      = useRef<HTMLInputElement>(null);
+  const companyRef        = useRef<HTMLInputElement>(null);
 
   // Mode toggles
   const [resumeMode, setResumeMode] = useState<ResumeMode>("upload");
-  const [jdMode,     setJdMode]     = useState<JdMode>("paste");
+  const [jdMode,     setJdMode]     = useState<JdMode>("url");
 
   // Length tracking — drives pill state + isComplete
   const [roleLen,    setRoleLen]    = useState(0);
@@ -91,8 +94,11 @@ export function NewPrepForm({ validationError }: { validationError?: boolean }) 
   const [uploadMsg,   setUploadMsg]   = useState("");
   const [isDragging,  setIsDragging]  = useState(false);
 
-  // JD URL (UI only for now)
-  const [jdUrl, setJdUrl] = useState("");
+  // JD URL fetch
+  const [jdUrl,        setJdUrl]        = useState("");
+  const [fetchState,   setFetchState]   = useState<FetchState>("idle");
+  const [fetchMsg,     setFetchMsg]     = useState("");
+  const [fetchStrategy, setFetchStrategy] = useState("");
 
   const [isPending, startTransition] = useTransition();
 
@@ -141,6 +147,63 @@ export function NewPrepForm({ validationError }: { validationError?: boolean }) 
     setUploadMsg("");
   }
 
+  // ── JD URL fetch ──────────────────────────────────────────────────────────────
+
+  async function fetchJobFromUrl() {
+    const url = jdUrl.trim();
+    if (!url) return;
+    setFetchState("loading");
+    setFetchMsg("");
+    setFetchStrategy("");
+    try {
+      const res = await fetch("/api/fetch-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json() as
+        | { success: true; job: { title: string; company: string; location: string; description: string }; strategy: string }
+        | { success: false; error: string; triedStrategies: string[] };
+
+      if (!data.success) {
+        setFetchState("error");
+        setFetchMsg(data.error);
+        return;
+      }
+
+      // Fill JD textarea
+      if (jdTextareaRef.current) {
+        jdTextareaRef.current.value = data.job.description;
+      }
+      setJdLen(data.job.description.trim().length);
+
+      // Pre-fill role + company if currently empty
+      if (data.job.title && roleTitleRef.current && !roleTitleRef.current.value.trim()) {
+        roleTitleRef.current.value = data.job.title;
+        setRoleLen(data.job.title.trim().length);
+      }
+      if (data.job.company && companyRef.current && !companyRef.current.value.trim()) {
+        companyRef.current.value = data.job.company;
+      }
+
+      setFetchState("success");
+      setFetchStrategy(data.strategy);
+      setFetchMsg(`${data.job.description.length.toLocaleString()} chars extracted`);
+    } catch {
+      setFetchState("error");
+      setFetchMsg("Network error — please try again.");
+    }
+  }
+
+  function clearJdFetch() {
+    if (jdTextareaRef.current) jdTextareaRef.current.value = "";
+    setJdLen(0);
+    setJdUrl("");
+    setFetchState("idle");
+    setFetchMsg("");
+    setFetchStrategy("");
+  }
+
   // ── Drop zone styles ──────────────────────────────────────────────────────────
 
   const dropZoneCls = [
@@ -171,12 +234,14 @@ export function NewPrepForm({ validationError }: { validationError?: boolean }) 
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <input
+              ref={roleTitleRef}
               name="roleTitle"
               placeholder="e.g. Senior Frontend Developer"
               onInput={(e) => setRoleLen((e.target as HTMLInputElement).value.trim().length)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm placeholder:text-slate-400 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-2 focus:ring-teal-100"
             />
             <input
+              ref={companyRef}
               name="company"
               placeholder="e.g. Shopify (optional)"
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm placeholder:text-slate-400 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-2 focus:ring-teal-100"
@@ -285,18 +350,66 @@ export function NewPrepForm({ validationError }: { validationError?: boolean }) 
 
             {/* URL zone — visible only in url mode */}
             {jdMode === "url" && (
-              <div className="upload-zone flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-amber-300 p-5 text-center hover:border-amber-400 hover:border-solid hover:bg-amber-50 hover:shadow-md hover:shadow-amber-100 hover:-translate-y-0.5">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 border border-amber-200 text-amber-500 text-lg">⊕</span>
-                <p className="text-sm font-semibold text-slate-700">Paste a job URL</p>
-                <p className="text-xs text-slate-400">LinkedIn, Greenhouse, Lever</p>
-                <input
-                  type="url"
-                  value={jdUrl}
-                  onChange={(e) => setJdUrl(e.target.value)}
-                  placeholder="https://jobs.company.com/…"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                />
-                <p className="text-xs text-amber-500 font-medium">✦ URL extraction coming soon</p>
+              <div className="space-y-2">
+                {/* Input + button row */}
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={jdUrl}
+                    onChange={(e) => { setJdUrl(e.target.value); setFetchState("idle"); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fetchJobFromUrl(); } }}
+                    placeholder="https://jobs.company.com/…"
+                    className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm placeholder:text-slate-400 outline-none transition focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={fetchJobFromUrl}
+                    disabled={!jdUrl.trim() || fetchState === "loading"}
+                    className="shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition disabled:opacity-50"
+                    style={{ background: "var(--brand-teal)" }}
+                  >
+                    {fetchState === "loading" ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Fetching…
+                      </span>
+                    ) : "Fetch →"}
+                  </button>
+                </div>
+
+                {/* Status feedback */}
+                {fetchState === "success" && (
+                  <div className="flex items-center justify-between rounded-xl border border-teal-200 bg-teal-50 px-3 py-2">
+                    <div className="flex items-center gap-2 text-xs text-teal-700">
+                      <span className="font-bold">✓ Fetched via {fetchStrategy}</span>
+                      <span className="text-teal-500">· {fetchMsg}</span>
+                    </div>
+                    <button type="button" onClick={clearJdFetch} className="text-xs text-slate-400 hover:text-slate-600">Clear</button>
+                  </div>
+                )}
+                {fetchState === "error" && (
+                  <div className="flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5">
+                    <div className="flex items-start gap-2 min-w-0">
+                      <span className="mt-px shrink-0 text-red-500">⚠</span>
+                      <div>
+                        <p className="text-xs font-semibold text-red-700">Could not fetch job details</p>
+                        <p className="text-xs text-red-500 mt-0.5">{fetchMsg}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setJdMode("paste"); setFetchState("idle"); }}
+                      className="shrink-0 rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 whitespace-nowrap"
+                    >
+                      Paste manually →
+                    </button>
+                  </div>
+                )}
+                {fetchState === "idle" && (
+                  <p className="text-xs text-slate-400 px-1">
+                    Works with Greenhouse, Lever, Ashby, and most company career pages.
+                  </p>
+                )}
               </div>
             )}
 
@@ -304,8 +417,8 @@ export function NewPrepForm({ validationError }: { validationError?: boolean }) 
             <textarea
               ref={jdTextareaRef}
               name="jobDescriptionText"
-              placeholder="Paste the full job description here…"
-              rows={jdMode === "paste" ? 10 : 5}
+              placeholder={jdMode === "url" ? "Fetched content will appear here — or paste manually…" : "Paste the full job description here…"}
+              rows={10}
               className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm placeholder:text-slate-400 outline-none transition focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
               onInput={(e) => setJdLen((e.target as HTMLTextAreaElement).value.trim().length)}
             />

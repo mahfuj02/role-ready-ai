@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateAndSaveGapAnalysis } from "@/lib/gap-analysis/generate-gap-analysis";
@@ -42,9 +43,11 @@ export async function reanalyseJob(formData: FormData) {
     where: { setupProfileId },
   });
 
-  // Kick off fresh analysis + questions async
-  generateAndSaveGapAnalysis(setupProfileId).catch(() => {});
-  createPracticeSessionFromLatestSetup(dbUser.email!).catch(() => {});
+  // Run after response is sent so the tasks aren't killed by the redirect
+  after(async () => {
+    await generateAndSaveGapAnalysis(setupProfileId).catch(() => {});
+    await createPracticeSessionFromLatestSetup(dbUser.email!).catch(() => {});
+  });
 
   redirect(`/gap-analysis?job=${jobId}`);
 }
