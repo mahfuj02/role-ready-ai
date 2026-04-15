@@ -59,11 +59,11 @@ function StarCircles({ star }: { star: StarAnalysisShape }) {
           <div key={letter} className="flex flex-col items-center gap-1.5">
             <div className={[
               "flex h-11 w-11 items-center justify-center rounded-full text-sm font-extrabold shadow-sm",
-              present ? "bg-green-500 text-white" : "bg-red-100 text-red-500 ring-2 ring-red-200",
+              present ? "bg-teal-500 text-white" : "bg-red-100 text-red-500 ring-2 ring-red-200",
             ].join(" ")}>
               {letter}
             </div>
-            <span className={`text-[10px] font-semibold ${present ? "text-green-600" : "text-red-400"}`}>
+            <span className={`text-[10px] font-semibold ${present ? "text-teal-600" : "text-red-400"}`}>
               {label}
             </span>
           </div>
@@ -94,7 +94,7 @@ function StarCircles({ star }: { star: StarAnalysisShape }) {
 function ScoreRow({ label, score, why }: { label: string; score: number; why: string }) {
   const pct = toPercent(score);
   const barColor =
-    pct >= 80 ? "#22c55e" :
+    pct >= 80 ? "#14b8a6" :
     pct >= 60 ? "#14b8a6" :
     pct >= 40 ? "#f59e0b" : "#ef4444";
 
