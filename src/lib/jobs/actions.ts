@@ -18,6 +18,7 @@ export type JobWithStats = {
   totalQuestionsAttempted: number;
   totalQuestionsAvailable: number;
   matchScore?: number;
+  sessionScore?: number; // avg practice score (0–100) from latest session
   skillTags: SkillTag[];
   status: "new" | "just_started" | "active";
   lastOpenedAt: Date;
@@ -67,7 +68,17 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
           createdAt: true,
           totalQuestions: true,
           answers: {
-            select: { id: true },
+            select: {
+              id: true,
+              feedback: {
+                select: {
+                  relevance: true,
+                  clarity: true,
+                  depth: true,
+                  communication: true,
+                },
+              },
+            },
           },
         },
       },
@@ -84,15 +95,10 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
     const roleTitle = job.setupProfile?.roleTitle || fallbackRole;
     const seniority = job.setupProfile?.seniority || "";
 
-    // Progress
-    const totalQuestionsAttempted = job.practiceSessions.reduce(
-      (sum, s) => sum + s.answers.length,
-      0
-    );
-    const totalQuestionsAvailable = job.practiceSessions.reduce(
-      (sum, s) => sum + s.totalQuestions,
-      0
-    );
+    // Progress — based on latest session only
+    const latestSession = job.practiceSessions[0];
+    const totalQuestionsAttempted = latestSession?.answers.length ?? 0;
+    const totalQuestionsAvailable = latestSession?.totalQuestions ?? 0;
 
     // Status
     const pct =
@@ -105,6 +111,18 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
         : pct >= 0.3
           ? "active"
           : "just_started";
+
+    // Session score — avg feedback from latest session's answered questions
+    const answersWithFeedback = latestSession?.answers.filter((a) => a.feedback) ?? [];
+    const sessionScore =
+      answersWithFeedback.length > 0
+        ? Math.round(
+            answersWithFeedback.reduce((sum, a) => {
+              const f = a.feedback!;
+              return sum + ((f.relevance + f.clarity + f.depth + f.communication) / 4) * 20;
+            }, 0) / answersWithFeedback.length
+          )
+        : undefined;
 
     // Gap analysis data
     const ga = job.setupProfile?.gapAnalysis;
@@ -136,6 +154,7 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
       totalQuestionsAttempted,
       totalQuestionsAvailable,
       matchScore,
+      sessionScore,
       skillTags,
       status,
       lastOpenedAt: job.updatedAt,
@@ -146,6 +165,114 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
       createdAt: job.createdAt,
     };
   });
+}
+
+export type DashboardStats = {
+  questionsThisWeek: number;
+  avgScorePct: number | null;
+  weakestArea: { label: string; pct: number } | null;
+  inProgress: {
+    sessionId: string;
+    jobName: string;
+    company: string;
+    role: string;
+    answered: number;
+    total: number;
+  } | null;
+  lastSession: { label: string; createdAt: Date } | null;
+};
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const session = await auth();
+  if (!session?.user?.email) return { questionsThisWeek: 0, avgScorePct: null, weakestArea: null, inProgress: null, lastSession: null };
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { id: true },
+  });
+  if (!user) return { questionsThisWeek: 0, avgScorePct: null, weakestArea: null, inProgress: null, lastSession: null };
+
+  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  // All feedbacks for user
+  const feedbacks = await prisma.feedback.findMany({
+    where: { answer: { practiceSession: { userId: user.id } } },
+    select: {
+      relevance: true, clarity: true, depth: true, communication: true,
+      createdAt: true,
+    },
+  });
+
+  const thisWeek = feedbacks.filter((f) => f.createdAt >= oneWeekAgo);
+
+  // Avg score (0–100)
+  const avgScorePct =
+    feedbacks.length > 0
+      ? Math.round(
+          feedbacks.reduce((s, f) => s + ((f.relevance + f.clarity + f.depth + f.communication) / 4) * 20, 0) /
+            feedbacks.length,
+        )
+      : null;
+
+  // Weakest dimension
+  let weakestArea: DashboardStats["weakestArea"] = null;
+  if (feedbacks.length > 0) {
+    const dims = { Relevance: 0, Clarity: 0, Depth: 0, Communication: 0 };
+    feedbacks.forEach((f) => {
+      dims.Relevance     += f.relevance;
+      dims.Clarity       += f.clarity;
+      dims.Depth         += f.depth;
+      dims.Communication += f.communication;
+    });
+    const [label, total] = Object.entries(dims).sort((a, b) => a[1] - b[1])[0];
+    weakestArea = { label, pct: Math.round((total / feedbacks.length) * 20) };
+  }
+
+  // Most recent in-progress session (has questions, not completed)
+  const inProgressRaw = await prisma.practiceSession.findFirst({
+    where: { userId: user.id, completedAt: null },
+    orderBy: { createdAt: "desc" },
+    include: {
+      job: { select: { name: true } },
+      questions: { select: { id: true } },
+      answers:   { select: { id: true } },
+      setupProfile: { select: { roleTitle: true } },
+    },
+  });
+
+  let inProgress: DashboardStats["inProgress"] = null;
+  if (inProgressRaw && inProgressRaw.questions.length > 0) {
+    const jobName = inProgressRaw.job?.name ?? inProgressRaw.setupProfile.roleTitle;
+    const parts   = jobName.split(" - ");
+    inProgress = {
+      sessionId: inProgressRaw.id,
+      jobName,
+      company:  parts.length > 1 ? parts[0] : "",
+      role:     parts.length > 1 ? parts.slice(1).join(" - ") : jobName,
+      answered: inProgressRaw.answers.length,
+      total:    inProgressRaw.questions.length,
+    };
+  }
+
+  // Last session label
+  const lastSessionRaw = await prisma.practiceSession.findFirst({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    include: {
+      job: { select: { name: true } },
+      setupProfile: { select: { roleTitle: true } },
+    },
+  });
+
+  let lastSession: DashboardStats["lastSession"] = null;
+  if (lastSessionRaw) {
+    const jobName = lastSessionRaw.job?.name ?? lastSessionRaw.setupProfile.roleTitle;
+    const parts   = jobName.split(" - ");
+    const label   = parts.length > 1 ? `${parts[0]} · ${parts.slice(1).join(" - ")}` : jobName;
+    lastSession = { label, createdAt: lastSessionRaw.createdAt };
+  }
+
+  return { questionsThisWeek: thisWeek.length, avgScorePct, weakestArea, inProgress, lastSession };
 }
 
 /**

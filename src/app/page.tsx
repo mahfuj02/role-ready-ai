@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
-import { getUserJobs, setCurrentJob, type JobWithStats, type SkillTag } from "@/lib/jobs/actions";
+import { getUserJobs, getDashboardStats, setCurrentJob, type JobWithStats, type SkillTag, type DashboardStats } from "@/lib/jobs/actions";
 import { redirect } from "next/navigation";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Logo } from "@/components/logo";
@@ -47,6 +47,16 @@ function SkillTagPill({ tag }: { tag: SkillTag }) {
   );
 }
 
+// ── Time ago helper ───────────────────────────────────────────────────────────
+
+function timeAgo(date: Date): string {
+  const secs = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (secs < 60)   return "just now";
+  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
+  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`;
+  return `${Math.floor(secs / 86400)}d ago`;
+}
+
 // ── Card accent colours — teal = complete, amber = in-progress / new ──────────
 
 const ACCENT_COMPLETE  = { border: "#0E7C86", avatar: "#07505a", btn: "#0E7C86", ring: "#0E7C86" };
@@ -69,7 +79,7 @@ export default async function Home() {
     return <LandingPage />;
   }
 
-  const jobs = await getUserJobs();
+  const [jobs, stats] = await Promise.all([getUserJobs(), getDashboardStats()]);
   const firstName = session.user.name?.split(" ")[0] || "there";
   const displayName =
     session.user.name
@@ -150,6 +160,12 @@ export default async function Home() {
                 <p className="mt-3 text-sm text-slate-400">
                   Pick up where you left off or start a new prep below.
                 </p>
+                {stats.lastSession && (
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3 py-1.5 text-xs text-slate-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-teal-400" />
+                    Last session: {stats.lastSession.label} · {timeAgo(stats.lastSession.createdAt)}
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -179,6 +195,77 @@ export default async function Home() {
 
       {/* ── Content ── */}
       <main className="mx-auto w-full max-w-6xl px-6 py-10">
+
+        {/* ── Stats row — returning users only ── */}
+        {jobs.length > 0 && (
+          <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {/* Active preps */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Active preps</p>
+              <p className="mt-1 text-3xl font-extrabold text-slate-900">{jobs.length}</p>
+              <p className="mt-0.5 text-xs text-slate-400">
+                {jobs.filter(j => j.status === "active").length} in progress
+              </p>
+              <div className="mt-2 h-0.5 w-8 rounded-full" style={{ background: "var(--brand-teal)" }} />
+            </div>
+
+            {/* Questions answered */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Questions answered</p>
+              <p className="mt-1 text-3xl font-extrabold text-slate-900">{stats.questionsThisWeek}</p>
+              <p className="mt-0.5 text-xs text-slate-400">this week</p>
+              <div className="mt-2 h-0.5 w-8 rounded-full bg-blue-400" />
+            </div>
+
+            {/* Avg score */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Avg score</p>
+              <p className={`mt-1 text-3xl font-extrabold ${stats.avgScorePct !== null ? (stats.avgScorePct >= 70 ? "text-teal-600" : stats.avgScorePct >= 50 ? "text-amber-500" : "text-red-500") : "text-slate-300"}`}>
+                {stats.avgScorePct !== null ? `${stats.avgScorePct}%` : "—"}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400">across all answers</p>
+              <div className="mt-2 h-0.5 w-8 rounded-full bg-amber-400" />
+            </div>
+
+            {/* Weakest area */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Weakest area</p>
+              <p className={`mt-1 text-2xl font-extrabold ${stats.weakestArea ? "text-red-500" : "text-slate-300"}`}>
+                {stats.weakestArea?.label ?? "—"}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400">
+                {stats.weakestArea ? `Avg ${stats.weakestArea.pct}% — needs work` : "No data yet"}
+              </p>
+              <div className="mt-2 h-0.5 w-8 rounded-full bg-red-400" />
+            </div>
+          </div>
+        )}
+
+        {/* ── Today's Focus — only when there's an in-progress session ── */}
+        {stats.inProgress && (
+          <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base" style={{ background: "var(--brand-teal)", color: "#fff" }}>
+                ✦
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-teal-600 mb-0.5">Today&apos;s focus</p>
+                <p className="text-sm font-semibold text-slate-800 truncate">
+                  Session in progress —{" "}
+                  {stats.inProgress.company ? `${stats.inProgress.company} · ` : ""}
+                  {stats.inProgress.role}. You&apos;re on Q{stats.inProgress.answered + 1} of {stats.inProgress.total}. Keep going!
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/practice?session=${stats.inProgress.sessionId}`}
+              className="shrink-0 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-bold text-teal-700 transition hover:bg-teal-100 whitespace-nowrap"
+            >
+              Continue →
+            </Link>
+          </div>
+        )}
+
         {/* Section header */}
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-700">Your interview preps</h2>
