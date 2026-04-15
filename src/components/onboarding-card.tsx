@@ -1,9 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-const STORAGE_KEY = "rr_onboarding_dismissed";
-
 const STEPS = [
   {
     n: 1,
@@ -23,32 +19,8 @@ const STEPS = [
 ];
 
 export function OnboardingCard() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const dismissed = localStorage.getItem(STORAGE_KEY);
-    if (!dismissed) setVisible(true);
-  }, []);
-
-  function dismiss() {
-    localStorage.setItem(STORAGE_KEY, "1");
-    setVisible(false);
-  }
-
-  if (!visible) return null;
-
   return (
-    <div className="mb-6 relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      {/* Dismiss */}
-      <button
-        type="button"
-        onClick={dismiss}
-        className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-        aria-label="Dismiss"
-      >
-        ✕
-      </button>
-
+    <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       {/* Title */}
       <div className="mb-5 flex items-center gap-3">
         <span className="text-2xl">👋</span>
