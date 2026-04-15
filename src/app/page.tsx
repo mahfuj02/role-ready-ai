@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Logo } from "@/components/logo";
 import { DeleteJobButton } from "@/components/delete-job-button";
+import { OnboardingCard } from "@/components/onboarding-card";
 
 // ── Circular progress donut ────────────────────────────────────────────────────
 
@@ -46,12 +47,18 @@ function SkillTagPill({ tag }: { tag: SkillTag }) {
   );
 }
 
-// ── Card accent colours (alternating teal / amber) ────────────────────────────
+// ── Card accent colours — teal = complete, amber = in-progress / new ──────────
 
-const ACCENTS = [
-  { border: "#0E7C86", avatar: "#07505a", btn: "#0E7C86", ring: "#0E7C86" },
-  { border: "#F4BB42", avatar: "#7a5a00", btn: "#d49f1a", ring: "#F4BB42" },
-];
+const ACCENT_COMPLETE  = { border: "#0E7C86", avatar: "#07505a", btn: "#0E7C86", ring: "#0E7C86" };
+const ACCENT_INPROGRESS = { border: "#F4BB42", avatar: "#7a5a00", btn: "#d49f1a", ring: "#F4BB42" };
+
+function jobAccent(job: JobWithStats) {
+  const pct =
+    job.totalQuestionsAvailable > 0
+      ? Math.round((job.totalQuestionsAttempted / job.totalQuestionsAvailable) * 100)
+      : 0;
+  return pct === 100 ? ACCENT_COMPLETE : ACCENT_INPROGRESS;
+}
 
 // ── Home (logged-in) ──────────────────────────────────────────────────────────
 
@@ -123,14 +130,28 @@ export default async function Home() {
               {activeCount} active prep{activeCount !== 1 ? "s" : ""}
             </div>
 
-            <h1 className="text-3xl font-extrabold leading-snug tracking-tight text-white sm:text-4xl">
-              Ready to{" "}
-              <span className="text-cyan-400">practice</span>{" "}
-              today,<br />{firstName}?
-            </h1>
-            <p className="mt-3 text-sm text-slate-400">
-              Pick up where you left off or start a new prep below.
-            </p>
+            {jobs.length === 0 ? (
+              <>
+                <h1 className="text-3xl font-extrabold leading-snug tracking-tight text-white sm:text-4xl">
+                  Welcome to{" "}
+                  <span className="text-cyan-400">RoleReady</span>,<br />{firstName}!
+                </h1>
+                <p className="mt-3 text-sm text-slate-400">
+                  Start your first prep session to get interview-ready.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-extrabold leading-snug tracking-tight text-white sm:text-4xl">
+                  Ready to{" "}
+                  <span className="text-cyan-400">practice</span>{" "}
+                  today,<br />{firstName}?
+                </h1>
+                <p className="mt-3 text-sm text-slate-400">
+                  Pick up where you left off or start a new prep below.
+                </p>
+              </>
+            )}
           </div>
 
           {/* New prep session CTA */}
@@ -168,24 +189,28 @@ export default async function Home() {
           )}
         </div>
 
-        {jobs.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-16 text-center">
-            <p className="text-slate-500">No preparations yet.</p>
-            <Link
-              href="/jobs/new"
-              className="mt-5 inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
-              style={{ background: "var(--brand-teal)" }}
-            >
-              Create your first prep
-            </Link>
-          </div>
-        ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {jobs.map((job, i) => (
-              <JobCard key={job.id} job={job} accent={ACCENTS[i % ACCENTS.length]} />
-            ))}
-          </div>
-        )}
+        {/* Onboarding card — client component, self-dismisses via localStorage */}
+        {jobs.length === 0 && <OnboardingCard />}
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {jobs.map((job) => (
+            <JobCard key={job.id} job={job} accent={jobAccent(job)} />
+          ))}
+
+          {/* New prep session card — always last */}
+          <Link
+            href="/jobs/new"
+            className="group flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white px-6 py-12 text-center transition hover:border-teal-400 hover:bg-teal-50/40 hover:shadow-sm"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-slate-400 text-xl transition group-hover:border-teal-400 group-hover:text-teal-500">
+              +
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-600 group-hover:text-teal-700">New prep session</p>
+              <p className="mt-0.5 text-xs text-slate-400">Upload resume + job description</p>
+            </div>
+          </Link>
+        </div>
       </main>
     </div>
   );
@@ -272,7 +297,10 @@ function JobCard({
         <div className="flex-1 min-w-0">
           <div className="mb-2 flex items-baseline justify-between text-xs text-slate-500">
             <span>
-              {job.totalQuestionsAttempted} of {job.totalQuestionsAvailable || "—"} questions
+              {job.totalQuestionsAttempted} / {job.totalQuestionsAvailable || "—"} questions
+              {job.sessionCount > 1 && (
+                <span className="ml-1 text-slate-400">· session {job.sessionCount}</span>
+              )}
             </span>
             <span className="font-semibold text-slate-700">{completionPct}%</span>
           </div>
@@ -285,14 +313,25 @@ function JobCard({
           </div>
         </div>
 
-        {/* Circular match score */}
-        {job.matchScore !== undefined ? (
-          <CircularProgress pct={job.matchScore} color={accent.ring} />
-        ) : (
-          <div className="h-14 w-14 flex items-center justify-center rounded-full bg-slate-50 border-2 border-dashed border-slate-200">
-            <span className="text-[10px] text-slate-400 text-center leading-tight">No<br/>score</span>
-          </div>
-        )}
+        {/* Practice score ring with match score tooltip */}
+        <div className="group relative flex-shrink-0">
+          {job.sessionScore !== undefined ? (
+            <CircularProgress pct={job.sessionScore} color={accent.ring} />
+          ) : (
+            <div className="h-14 w-14 flex items-center justify-center rounded-full bg-slate-50 border-2 border-dashed border-slate-200">
+              <span className="text-[10px] text-slate-400 text-center leading-tight">No<br/>score</span>
+            </div>
+          )}
+          {/* Tooltip: match score */}
+          {job.matchScore !== undefined && (
+            <div className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block z-20">
+              <div className="whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1 text-[10px] font-semibold text-white shadow-lg">
+                Match {job.matchScore}%
+              </div>
+              <div className="mx-auto mt-0.5 h-1.5 w-1.5 rotate-45 bg-slate-800" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Action buttons */}
