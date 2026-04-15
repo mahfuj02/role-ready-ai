@@ -4,7 +4,7 @@ import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Logo } from "@/components/logo";
-import { PracticeAnswerInput } from "./practice-client";
+import { PracticeAnswerInput, QuestionsLoading } from "./practice-client";
 
 type Props = {
   searchParams: Promise<{ session?: string; q?: string }>;
@@ -116,7 +116,9 @@ export default async function PracticePage({ searchParams }: Props) {
   if (!practiceSession) redirect("/");
 
   const questions = practiceSession.questions;
-  if (questions.length === 0) redirect("/");
+  if (questions.length === 0) {
+    return <QuestionsLoading sessionId={practiceSession.id} />;
+  }
 
   // ── Resolve current question ──────────────────────────────────────────────
 
@@ -223,7 +225,7 @@ export default async function PracticePage({ searchParams }: Props) {
 
           {/* Progress dots */}
           <div className="mt-3 flex flex-wrap gap-1">
-            {questions.map((q, i) => {
+            {questions.map((q) => {
               const answered = answeredIds.has(q.id);
               const isCurrent = q.id === currentQ.id;
               return (

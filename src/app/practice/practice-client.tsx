@@ -1,7 +1,29 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { submitAnswerAction } from "./actions";
+
+export function QuestionsLoading({ sessionId }: { sessionId: string }) {
+  const router = useRouter();
+
+  useEffect(() => {
+    const id = setInterval(() => router.refresh(), 2500);
+    return () => clearInterval(id);
+  }, [router]);
+
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-5 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-50">
+        <span className="h-7 w-7 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+      </div>
+      <div>
+        <p className="text-base font-bold text-slate-800">Generating your questions…</p>
+        <p className="mt-1 text-sm text-slate-400">This takes about 10–15 seconds. Hang tight!</p>
+      </div>
+    </div>
+  );
+}
 
 export function PracticeAnswerInput({
   sessionId,
