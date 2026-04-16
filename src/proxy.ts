@@ -9,6 +9,5 @@ export const config = {
     "/gap-analysis/:path*",
     "/jobs/:path*",
     "/session/:path*",
-    "/settings/:path*",
   ],
 };
