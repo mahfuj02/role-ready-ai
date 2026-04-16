@@ -165,17 +165,17 @@ export default async function PracticePage({ searchParams }: Props) {
   const prevQ       = currentIdx > 0 ? questions[currentIdx - 1] : null;
   const nextQ       = currentIdx < questions.length - 1 ? questions[currentIdx + 1] : null;
 
-  const existingAnswer = practiceSession.answers.find((a) => a.questionId === currentQ.id) ?? null;
+  const existingAnswer = practiceSession.answers.find((a: A) => a.questionId === currentQ.id) ?? null;
   const feedback       = existingAnswer?.feedback ?? null;
   const starAnalysis   = existingAnswer?.starAnalysis ?? null;
 
   // ── Stats ─────────────────────────────────────────────────────────────────
 
-  const answeredIds  = new Set(practiceSession.answers.map((a) => a.questionId));
+  const answeredIds  = new Set(practiceSession.answers.map((a: A) => a.questionId));
   const doneCount    = answeredIds.size;
   const leftCount    = questions.length - doneCount;
   const avgPct       = avgScorePercent(
-    practiceSession.answers.map((a) => a.feedback).filter(Boolean) as {
+    practiceSession.answers.map((a: A) => a.feedback).filter(Boolean) as {
       relevance: number; clarity: number; depth: number; communication: number;
     }[],
   );
