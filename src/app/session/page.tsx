@@ -123,7 +123,7 @@ export default async function SessionSummaryPage({ searchParams }: Props) {
 
   const answersWithFeedback = ps.answers.filter((a: PsAnswer) => a.feedback);
   const avgScore = answersWithFeedback.length
-    ? Math.round(answersWithFeedback.reduce((s, a: PsAnswer) => s + avgFeedback(a.feedback!), 0) / answersWithFeedback.length)
+    ? Math.round(answersWithFeedback.reduce((s: number, a: PsAnswer) => s + avgFeedback(a.feedback!), 0) / answersWithFeedback.length)
     : 0;
 
   type PrevAnswer = NonNullable<typeof prevSession>["answers"][number];
