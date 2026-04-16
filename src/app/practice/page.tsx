@@ -260,7 +260,7 @@ export default async function PracticePage({ searchParams }: Props) {
 
           {/* Progress dots */}
           <div className="mt-3 flex flex-wrap gap-1">
-            {questions.map((q) => {
+            {questions.map((q: Q) => {
               const answered = answeredIds.has(q.id);
               const isCurrent = q.id === currentQ.id;
               return (
