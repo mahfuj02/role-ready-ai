@@ -29,19 +29,17 @@ function getDriverConnectionString(databaseUrl: string): string {
   return payload.databaseUrl;
 }
 
-const rawDatabaseUrl = process.env.DATABASE_URL;
-
-if (!rawDatabaseUrl) {
-  throw new Error("DATABASE_URL is not set.");
+function createPrismaClient(): PrismaClient {
+  const rawDatabaseUrl = process.env.DATABASE_URL;
+  if (!rawDatabaseUrl) {
+    throw new Error("DATABASE_URL is not set.");
+  }
+  const adapter = new PrismaPg({ connectionString: getDriverConnectionString(rawDatabaseUrl) });
+  return new PrismaClient({ adapter });
 }
 
-const adapter = new PrismaPg({ connectionString: getDriverConnectionString(rawDatabaseUrl) });
-
-export const prisma =
-  globalThis.prismaGlobal ??
-  new PrismaClient({
-    adapter,
-  });
+export const prisma: PrismaClient =
+  globalThis.prismaGlobal ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalThis.prismaGlobal = prisma;
