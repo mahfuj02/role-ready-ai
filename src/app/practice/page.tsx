@@ -155,9 +155,10 @@ export default async function PracticePage({ searchParams }: Props) {
 
   // ── Resolve current question ──────────────────────────────────────────────
 
+  type Q = typeof questions[number];
   const currentQ = params.q
-    ? (questions.find((q) => q.id === params.q) ?? questions[0])
-    : (questions.find((q) => !practiceSession.answers.some((a) => a.questionId === q.id)) ?? questions[0]);
+    ? (questions.find((q: Q) => q.id === params.q) ?? questions[0])
+    : (questions.find((q: Q) => !practiceSession.answers.some((a) => a.questionId === q.id)) ?? questions[0]);
 
   const currentIdx  = questions.indexOf(currentQ);
   const prevQ       = currentIdx > 0 ? questions[currentIdx - 1] : null;
