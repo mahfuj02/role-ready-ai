@@ -96,7 +96,7 @@ export default async function Home() {
       .map((p) => p[0]?.toUpperCase())
       .join("") || "U";
 
-  const activeCount = jobs.filter((j) => j.status !== "new").length;
+  const activeCount = jobs.filter((j: JobWithStats) => j.status !== "new").length;
 
   async function handleSignOut() {
     "use server";
@@ -204,7 +204,7 @@ export default async function Home() {
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Active preps</p>
               <p className="mt-1 text-3xl font-extrabold text-slate-900">{jobs.length}</p>
               <p className="mt-0.5 text-xs text-slate-400">
-                {jobs.filter(j => j.status === "active").length} in progress
+                {jobs.filter((j: JobWithStats) => j.status === "active").length} in progress
               </p>
               <div className="mt-2 h-0.5 w-8 rounded-full" style={{ background: "var(--brand-teal)" }} />
             </div>

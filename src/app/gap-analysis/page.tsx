@@ -135,8 +135,8 @@ export default async function GapAnalysisPage({ searchParams }: Props) {
   const suggestions = (ga?.resumeSuggestions as ResumeSuggestion[] | null) ?? [];
   // rewrites derived inside GapAnalysisTabs — not needed at page level
 
-  const criticalCount  = skillGaps.filter((g) => g.importance === "critical").length;
-  const minorCount     = skillGaps.filter((g) => g.importance !== "critical").length;
+  const criticalCount  = skillGaps.filter((g: SkillGap) => g.importance === "critical").length;
+  const minorCount     = skillGaps.filter((g: SkillGap) => g.importance !== "critical").length;
   const strengthCount  = ga?.strengthAreas?.length ?? 0;
   const totalSkills    = strengthCount + skillGaps.length;
   const matchedSkills  = strengthCount + minorCount;

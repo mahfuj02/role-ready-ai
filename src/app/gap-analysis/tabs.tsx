@@ -48,10 +48,10 @@ export function GapAnalysisTabs({
   const [tab, setTab] = useState<TabId>(0);
   const [qFilter, setQFilter] = useState<QFilter>("all");
 
-  const rewrites = suggestions.filter((s) => s.type === "rewrite" && s.original);
-  const bCount = questions.filter((q) => q.type === "BEHAVIORAL").length;
-  const tCount = questions.filter((q) => q.type === "TECHNICAL").length;
-  const filteredQs = qFilter === "all" ? questions : questions.filter((q) => q.type === qFilter);
+  const rewrites = suggestions.filter((s: ResumeSuggestion) => s.type === "rewrite" && s.original);
+  const bCount = questions.filter((q: Question) => q.type === "BEHAVIORAL").length;
+  const tCount = questions.filter((q: Question) => q.type === "TECHNICAL").length;
+  const filteredQs = qFilter === "all" ? questions : questions.filter((q: Question) => q.type === qFilter);
 
   // Each tab has its own semantic colour
   const TABS = [
@@ -238,7 +238,7 @@ export function GapAnalysisTabs({
               </div>
             ) : (
               <div className="space-y-2">
-                {filteredQs.map((q) => {
+                {filteredQs.map((q: Question) => {
                   const isBehavioral = q.type === "BEHAVIORAL";
                   const lbl = likelihoodLabel(q.difficulty);
                   return (

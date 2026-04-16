@@ -113,30 +113,34 @@ export default async function SessionSummaryPage({ searchParams }: Props) {
 
   // ── Derived stats ───────────────────────────────────────────────────────────
 
-  const answeredIds  = new Set(ps.answers.map((a) => a.questionId));
-  const skipped      = ps.questions.filter((q) => !answeredIds.has(q.id));
+  type PsAnswer = typeof ps.answers[number];
+  type PsQuestion = typeof ps.questions[number];
+
+  const answeredIds  = new Set(ps.answers.map((a: PsAnswer) => a.questionId));
+  const skipped      = ps.questions.filter((q: PsQuestion) => !answeredIds.has(q.id));
   const doneCount    = ps.answers.length;
   const totalCount   = ps.questions.length;
 
-  const answersWithFeedback = ps.answers.filter((a) => a.feedback);
+  const answersWithFeedback = ps.answers.filter((a: PsAnswer) => a.feedback);
   const avgScore = answersWithFeedback.length
-    ? Math.round(answersWithFeedback.reduce((s, a) => s + avgFeedback(a.feedback!), 0) / answersWithFeedback.length)
+    ? Math.round(answersWithFeedback.reduce((s, a: PsAnswer) => s + avgFeedback(a.feedback!), 0) / answersWithFeedback.length)
     : 0;
 
-  const prevAvg = prevSession && prevSession.answers.filter((a) => a.feedback).length
+  type PrevAnswer = NonNullable<typeof prevSession>["answers"][number];
+  const prevAvg = prevSession && prevSession.answers.filter((a: PrevAnswer) => a.feedback).length
     ? Math.round(
-        prevSession.answers.filter((a) => a.feedback)
-          .reduce((s, a) => s + avgFeedback(a.feedback!), 0) /
-        prevSession.answers.filter((a) => a.feedback).length
+        prevSession.answers.filter((a: PrevAnswer) => a.feedback)
+          .reduce((s: number, a: PrevAnswer) => s + avgFeedback(a.feedback!), 0) /
+        prevSession.answers.filter((a: PrevAnswer) => a.feedback).length
       )
     : null;
   const delta = prevAvg !== null ? avgScore - prevAvg : null;
 
-  const behavioralWithStar = ps.answers.filter((a) => a.starAnalysis);
+  const behavioralWithStar = ps.answers.filter((a: PsAnswer) => a.starAnalysis);
   const starAvg = (part: "situation" | "task" | "action" | "result") =>
     behavioralWithStar.length
       ? Math.round(
-          (behavioralWithStar.filter((a) => a.starAnalysis![part]).length / behavioralWithStar.length) * 100
+          (behavioralWithStar.filter((a: PsAnswer) => a.starAnalysis![part]).length / behavioralWithStar.length) * 100
         )
       : 0;
 
@@ -348,7 +352,7 @@ export default async function SessionSummaryPage({ searchParams }: Props) {
                         {skipped.length} question{skipped.length !== 1 ? "s" : ""} skipped — come back to {skipped.length !== 1 ? "them" : "it"}
                       </p>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        The skipped questions include {skipped.filter((q) => q.starRecommended).length} gap-related ones. Most likely to come up in your {company ?? "upcoming"} interview.
+                        The skipped questions include {skipped.filter((q: PsQuestion) => q.starRecommended).length} gap-related ones. Most likely to come up in your {company ?? "upcoming"} interview.
                       </p>
                     </div>
                   </div>
@@ -428,7 +432,7 @@ export default async function SessionSummaryPage({ searchParams }: Props) {
               </span>
             </div>
             <div className="space-y-2">
-              {skipped.map((q) => (
+              {skipped.map((q: PsQuestion) => (
                 <Link
                   key={q.id}
                   href={`/practice?session=${ps.id}&q=${q.id}`}
