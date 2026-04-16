@@ -86,7 +86,8 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
     orderBy: { updatedAt: "desc" },
   });
 
-  return jobs.map((job) => {
+  type RawJob = typeof jobs[number];
+  return jobs.map((job: RawJob) => {
     // Parse company + role from "Company - Role" or fall back to setupProfile
     const nameParts = job.name.split(" - ");
     const companyName = nameParts.length > 1 ? nameParts[0].trim() : "";
@@ -113,11 +114,12 @@ export async function getUserJobs(): Promise<JobWithStats[]> {
           : "just_started";
 
     // Session score — avg feedback from latest session's answered questions
-    const answersWithFeedback = latestSession?.answers.filter((a) => a.feedback) ?? [];
+    type SessionAnswer = NonNullable<typeof latestSession>["answers"][number];
+    const answersWithFeedback = latestSession?.answers.filter((a: SessionAnswer) => a.feedback) ?? [];
     const sessionScore =
       answersWithFeedback.length > 0
         ? Math.round(
-            answersWithFeedback.reduce((sum, a) => {
+            answersWithFeedback.reduce((sum: number, a: SessionAnswer) => {
               const f = a.feedback!;
               return sum + ((f.relevance + f.clarity + f.depth + f.communication) / 4) * 20;
             }, 0) / answersWithFeedback.length
@@ -203,13 +205,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     },
   });
 
-  const thisWeek = feedbacks.filter((f) => f.createdAt >= oneWeekAgo);
+  type FbRow = typeof feedbacks[number];
+  const thisWeek = feedbacks.filter((f: FbRow) => f.createdAt >= oneWeekAgo);
 
   // Avg score (0–100)
   const avgScorePct =
     feedbacks.length > 0
       ? Math.round(
-          feedbacks.reduce((s, f) => s + ((f.relevance + f.clarity + f.depth + f.communication) / 4) * 20, 0) /
+          feedbacks.reduce((s: number, f: FbRow) => s + ((f.relevance + f.clarity + f.depth + f.communication) / 4) * 20, 0) /
             feedbacks.length,
         )
       : null;
@@ -218,7 +221,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   let weakestArea: DashboardStats["weakestArea"] = null;
   if (feedbacks.length > 0) {
     const dims = { Relevance: 0, Clarity: 0, Depth: 0, Communication: 0 };
-    feedbacks.forEach((f) => {
+    feedbacks.forEach((f: FbRow) => {
       dims.Relevance     += f.relevance;
       dims.Clarity       += f.clarity;
       dims.Depth         += f.depth;
