@@ -6,23 +6,47 @@ import { submitAnswerAction } from "./actions";
 
 // ── Questions loading screen ───────────────────────────────────────────────────
 
-export function QuestionsLoading({ sessionId: _ }: { sessionId: string }) {
+export function QuestionsLoading({ sessionId }: { sessionId: string }) {
   const router = useRouter();
+  const [dots, setDots] = useState(".");
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => router.refresh(), 2500);
-    return () => clearInterval(id);
-  }, [router]);
+    // Animate dots
+    const dotsId = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 500);
+    // Count elapsed seconds
+    const countId = setInterval(() => setElapsed(s => s + 1), 1000);
+    // Poll — use replace so Next.js re-runs the full server component
+    const pollId = setInterval(() => {
+      router.replace(`/practice?session=${sessionId}`);
+    }, 3000);
+    return () => { clearInterval(dotsId); clearInterval(countId); clearInterval(pollId); };
+  }, [router, sessionId]);
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-5 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-50">
-        <span className="h-7 w-7 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-5 text-center px-6">
+      {/* Animated ring */}
+      <div className="relative flex h-20 w-20 items-center justify-center">
+        <span className="absolute inset-0 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+        <span className="text-2xl">✦</span>
       </div>
+
       <div>
-        <p className="text-base font-bold text-slate-800">Generating your questions…</p>
-        <p className="mt-1 text-sm text-slate-400">This takes about 10–15 seconds. Hang tight!</p>
+        <p className="text-base font-bold text-slate-800">Generating your questions{dots}</p>
+        <p className="mt-1 text-sm text-slate-400">AI is building a personalised set for this role.</p>
+        {elapsed >= 10 && (
+          <p className="mt-2 text-xs text-slate-400">Taking a bit longer than usual — almost there.</p>
+        )}
       </div>
+
+      {/* Manual refresh fallback */}
+      <button
+        type="button"
+        onClick={() => router.replace(`/practice?session=${sessionId}`)}
+        className="mt-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-500 shadow-sm transition hover:border-teal-400 hover:text-teal-600"
+      >
+        Check now →
+      </button>
     </div>
   );
 }

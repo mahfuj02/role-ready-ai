@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
-import { getUserJobs, getDashboardStats, setCurrentJob, type JobWithStats, type SkillTag, type DashboardStats } from "@/lib/jobs/actions";
+import { getUserJobs, getDashboardStats, setCurrentJob, type JobWithStats, type SkillTag } from "@/lib/jobs/actions";
 import { redirect } from "next/navigation";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Logo } from "@/components/logo";
@@ -458,7 +458,7 @@ async function LandingPage() {
       {/* ── Nav ── */}
       <header className="sticky top-0 z-50 border-b border-white/5 backdrop-blur-md" style={{ background: "rgba(11,31,58,0.85)" }}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-lg font-bold tracking-tight text-cyan-400">PrepAI</span>
+          <span className="text-lg font-bold tracking-tight text-cyan-400">RoleReady</span>
           <form
             action={async () => {
               "use server";
@@ -499,7 +499,7 @@ async function LandingPage() {
           className="animate-fade-up mt-6 max-w-xl text-lg leading-relaxed text-white/60"
           style={{ animationDelay: "0.2s" }}
         >
-          Upload your resume and job description. PrepAI spots every gap,
+          Upload your resume and job description. RoleReady spots every gap,
           generates role-specific questions, and coaches your answers with
           real-time STAR feedback.
         </p>
@@ -567,7 +567,7 @@ async function LandingPage() {
 
       {/* ── Footer ── */}
       <footer className="border-t border-white/5 px-6 py-8 text-center text-sm text-white/25">
-        © {new Date().getFullYear()} PrepAI · AI-powered interview coaching
+        © {new Date().getFullYear()} RoleReady · AI-powered interview coaching
       </footer>
     </div>
   );
