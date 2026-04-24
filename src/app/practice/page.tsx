@@ -217,7 +217,7 @@ export default async function PracticePage({ searchParams }: Props) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
+      <main className="animate-page-in mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
 
         {/* ── Progress card ── */}
         <div className="mb-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">

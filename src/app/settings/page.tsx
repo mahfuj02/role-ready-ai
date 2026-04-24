@@ -30,7 +30,7 @@ export default async function SettingsPage({ searchParams }: Props) {
   async function handleSignOut() { "use server"; await signOut({ redirectTo: "/" }); }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f1f4f8" }}>
+    <div className="animate-page-in min-h-screen" style={{ backgroundColor: "#f1f4f8" }}>
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-cyan-900/40 bg-[#071f3f]">

@@ -6,6 +6,7 @@ import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Logo } from "@/components/logo";
 import { DeleteJobButton } from "@/components/delete-job-button";
 import { OnboardingCard } from "@/components/onboarding-card";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 // ── Circular progress donut ────────────────────────────────────────────────────
 
@@ -104,7 +105,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f1f4f8" }}>
+    <div className="animate-page-in min-h-screen" style={{ backgroundColor: "#f1f4f8" }}>
 
       {/* ── Header ── */}
       <header className="sticky top-0 z-50 border-b border-cyan-900/40 bg-[#071f3f]">
@@ -201,104 +202,93 @@ export default async function Home() {
         {/* ── Stats row — returning users only ── */}
         {jobs.length > 0 && (
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {/* Active preps */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Active preps</p>
-              <p className="mt-1 text-3xl font-extrabold text-slate-900">{jobs.length}</p>
-              <p className="mt-0.5 text-xs text-slate-400">
-                {jobs.filter((j: JobWithStats) => j.status === "active").length} in progress
-              </p>
-              <div className="mt-2 h-0.5 w-8 rounded-full" style={{ background: "var(--brand-teal)" }} />
-            </div>
-
-            {/* Questions answered */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Questions answered</p>
-              <p className="mt-1 text-3xl font-extrabold text-slate-900">{stats.questionsThisWeek}</p>
-              <p className="mt-0.5 text-xs text-slate-400">this week</p>
-              <div className="mt-2 h-0.5 w-8 rounded-full bg-blue-400" />
-            </div>
-
-            {/* Avg score */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Avg score</p>
-              <p className={`mt-1 text-3xl font-extrabold ${stats.avgScorePct !== null ? (stats.avgScorePct >= 70 ? "text-teal-600" : stats.avgScorePct >= 50 ? "text-amber-500" : "text-red-500") : "text-slate-300"}`}>
-                {stats.avgScorePct !== null ? `${stats.avgScorePct}%` : "—"}
-              </p>
-              <p className="mt-0.5 text-xs text-slate-400">across all answers</p>
-              <div className="mt-2 h-0.5 w-8 rounded-full bg-amber-400" />
-            </div>
-
-            {/* Weakest area */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Weakest area</p>
-              <p className={`mt-1 text-2xl font-extrabold ${stats.weakestArea ? "text-red-500" : "text-slate-300"}`}>
-                {stats.weakestArea?.label ?? "—"}
-              </p>
-              <p className="mt-0.5 text-xs text-slate-400">
-                {stats.weakestArea ? `Avg ${stats.weakestArea.pct}% — needs work` : "No data yet"}
-              </p>
-              <div className="mt-2 h-0.5 w-8 rounded-full bg-red-400" />
-            </div>
+            <ScrollReveal delay={0}>
+              <div className="card-hover rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Active preps</p>
+                <p className="mt-1 text-3xl font-extrabold text-slate-900">{jobs.length}</p>
+                <p className="mt-0.5 text-xs text-slate-400">{jobs.filter((j: JobWithStats) => j.status === "active").length} in progress</p>
+                <div className="mt-2 h-0.5 w-8 rounded-full" style={{ background: "var(--brand-teal)" }} />
+              </div>
+            </ScrollReveal>
+            <ScrollReveal delay={80}>
+              <div className="card-hover rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Questions answered</p>
+                <p className="mt-1 text-3xl font-extrabold text-slate-900">{stats.questionsThisWeek}</p>
+                <p className="mt-0.5 text-xs text-slate-400">this week</p>
+                <div className="mt-2 h-0.5 w-8 rounded-full bg-blue-400" />
+              </div>
+            </ScrollReveal>
+            <ScrollReveal delay={160}>
+              <div className="card-hover rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Avg score</p>
+                <p className={`mt-1 text-3xl font-extrabold ${stats.avgScorePct !== null ? (stats.avgScorePct >= 70 ? "text-teal-600" : stats.avgScorePct >= 50 ? "text-amber-500" : "text-red-500") : "text-slate-300"}`}>
+                  {stats.avgScorePct !== null ? `${stats.avgScorePct}%` : "—"}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-400">across all answers</p>
+                <div className="mt-2 h-0.5 w-8 rounded-full bg-amber-400" />
+              </div>
+            </ScrollReveal>
+            <ScrollReveal delay={240}>
+              <div className="card-hover rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Weakest area</p>
+                <p className={`mt-1 text-2xl font-extrabold ${stats.weakestArea ? "text-red-500" : "text-slate-300"}`}>
+                  {stats.weakestArea?.label ?? "—"}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-400">{stats.weakestArea ? `Avg ${stats.weakestArea.pct}% — needs work` : "No data yet"}</p>
+                <div className="mt-2 h-0.5 w-8 rounded-full bg-red-400" />
+              </div>
+            </ScrollReveal>
           </div>
         )}
 
-        {/* ── Today's Focus — only when there's an in-progress session ── */}
+        {/* ── Today's Focus ── */}
         {stats.inProgress && (
-          <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base" style={{ background: "var(--brand-teal)", color: "#fff" }}>
-                ✦
-              </span>
-              <div className="min-w-0">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-teal-600 mb-0.5">Today&apos;s focus</p>
-                <p className="text-sm font-semibold text-slate-800 truncate">
-                  Session in progress —{" "}
-                  {stats.inProgress.company ? `${stats.inProgress.company} · ` : ""}
-                  {stats.inProgress.role}. You&apos;re on Q{stats.inProgress.answered + 1} of {stats.inProgress.total}. Keep going!
-                </p>
+          <ScrollReveal>
+            <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm card-hover">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base" style={{ background: "var(--brand-teal)", color: "#fff" }}>✦</span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-teal-600 mb-0.5">Today&apos;s focus</p>
+                  <p className="text-sm font-semibold text-slate-800 truncate">
+                    Session in progress —{" "}
+                    {stats.inProgress.company ? `${stats.inProgress.company} · ` : ""}
+                    {stats.inProgress.role}. You&apos;re on Q{stats.inProgress.answered + 1} of {stats.inProgress.total}. Keep going!
+                  </p>
+                </div>
               </div>
+              <Link href={`/practice?session=${stats.inProgress.sessionId}`} className="shrink-0 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-bold text-teal-700 transition hover:bg-teal-100 whitespace-nowrap">
+                Continue →
+              </Link>
             </div>
-            <Link
-              href={`/practice?session=${stats.inProgress.sessionId}`}
-              className="shrink-0 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-bold text-teal-700 transition hover:bg-teal-100 whitespace-nowrap"
-            >
-              Continue →
-            </Link>
-          </div>
+          </ScrollReveal>
         )}
 
         {/* Section header */}
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-700">Your interview preps</h2>
           {activeCount > 0 && (
-            <span className="rounded-full border border-slate-300 bg-white px-3 py-0.5 text-xs font-medium text-slate-600">
-              {activeCount} active
-            </span>
+            <span className="rounded-full border border-slate-300 bg-white px-3 py-0.5 text-xs font-medium text-slate-600">{activeCount} active</span>
           )}
         </div>
 
-        {/* Onboarding card — client component, self-dismisses via localStorage */}
         {jobs.length === 0 && <OnboardingCard />}
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {jobs.map((job) => (
-            <JobCard key={job.id} job={job} accent={jobAccent(job)} />
+          {jobs.map((job, i) => (
+            <ScrollReveal key={job.id} delay={i * 60}>
+              <JobCard job={job} accent={jobAccent(job)} />
+            </ScrollReveal>
           ))}
 
-          {/* New prep session card — always last */}
-          <Link
-            href="/jobs/new"
-            className="group flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white px-6 py-12 text-center transition hover:border-teal-400 hover:bg-teal-50/40 hover:shadow-sm"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-slate-400 text-xl transition group-hover:border-teal-400 group-hover:text-teal-500">
-              +
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-slate-600 group-hover:text-teal-700">New prep session</p>
-              <p className="mt-0.5 text-xs text-slate-400">Upload resume + job description</p>
-            </div>
-          </Link>
+          <ScrollReveal delay={jobs.length * 60}>
+            <Link href="/jobs/new" className="group flex h-full min-h-[200px] flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white px-6 py-12 text-center transition hover:border-teal-400 hover:bg-teal-50/40 hover:shadow-sm">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-slate-400 text-xl transition group-hover:border-teal-400 group-hover:text-teal-500">+</span>
+              <div>
+                <p className="text-sm font-semibold text-slate-600 group-hover:text-teal-700">New prep session</p>
+                <p className="mt-0.5 text-xs text-slate-400">Upload resume + job description</p>
+              </div>
+            </Link>
+          </ScrollReveal>
         </div>
       </main>
     </div>
@@ -340,7 +330,7 @@ function JobCard({
 
   return (
     <article
-      className="flex flex-col rounded-2xl bg-white shadow-sm overflow-hidden"
+      className="card-hover flex flex-col rounded-2xl bg-white shadow-sm overflow-hidden"
       style={{ borderTop: `3px solid ${accent.border}` }}
     >
       {/* Card header */}

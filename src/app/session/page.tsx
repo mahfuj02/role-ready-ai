@@ -193,7 +193,7 @@ export default async function SessionSummaryPage({ searchParams }: Props) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 space-y-5">
+      <main className="animate-page-in mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 space-y-5">
 
         {/* ── Hero ── */}
         <div

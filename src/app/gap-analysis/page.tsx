@@ -142,7 +142,7 @@ export default async function GapAnalysisPage({ searchParams }: Props) {
   const matchedSkills  = strengthCount + minorCount;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#F0F4F8" }}>
+    <div className="animate-page-in min-h-screen" style={{ backgroundColor: "#F0F4F8" }}>
 
       {/* ── Header ── */}
       <header className="sticky top-0 z-50 border-b border-cyan-900/40 bg-[#071f3f]">
