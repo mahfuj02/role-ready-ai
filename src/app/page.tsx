@@ -123,7 +123,8 @@ export default async function Home() {
 
       {/* ── Hero ── */}
       <section
-        className="relative overflow-hidden border-b border-cyan-900/30 px-6 py-12"
+        id="hero"
+        className="relative overflow-hidden border-b border-cyan-900/30 px-6 py-10 pb-14"
         style={{
           backgroundColor: "#072548",
           backgroundImage:
@@ -131,9 +132,9 @@ export default async function Home() {
           backgroundSize: "52px 52px",
         }}
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8">
-          {/* Left copy */}
-          <div>
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
+          {/* Copy */}
+          <div className="min-w-0">
             {/* Badge */}
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-cyan-700/30 px-3 py-1 text-xs font-medium text-cyan-300 border border-cyan-700/40">
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
@@ -161,9 +162,9 @@ export default async function Home() {
                   Pick up where you left off or start a new prep below.
                 </p>
                 {stats.lastSession && (
-                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3 py-1.5 text-xs text-slate-300">
-                    <span className="h-1.5 w-1.5 rounded-full bg-teal-400" />
-                    Last session: {stats.lastSession.label} · {timeAgo(stats.lastSession.createdAt)}
+                  <div className="mt-4 flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-xs text-slate-300 sm:inline-flex sm:rounded-full sm:py-1.5">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-400" />
+                    <span>Last session: {stats.lastSession.label} · {timeAgo(stats.lastSession.createdAt)}</span>
                   </div>
                 )}
               </>
@@ -173,7 +174,7 @@ export default async function Home() {
           {/* New prep session CTA */}
           <Link
             href="/jobs/new"
-            className="animate-prep-glow flex-shrink-0 flex items-center gap-4 rounded-2xl border border-cyan-700/50 bg-[#09324f] px-6 py-4 text-white shadow-lg transition hover:border-cyan-500/60 hover:bg-[#0a3a5c]"
+            className="animate-prep-glow flex w-full items-center gap-4 rounded-2xl border border-cyan-700/50 bg-[#09324f] px-6 py-4 text-white shadow-lg transition hover:border-cyan-500/60 hover:bg-[#0a3a5c] sm:w-auto sm:flex-shrink-0"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-700/40 text-cyan-300 text-xl">
               ✦
@@ -186,15 +187,16 @@ export default async function Home() {
         </div>
 
         {/* Scroll hint */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#09324f] border border-cyan-800/50 text-slate-400 text-sm">
-            ↓
-          </div>
-        </div>
+        <a
+          href="#main-content"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-[#09324f] border border-cyan-800/50 text-slate-400 text-sm transition hover:border-cyan-500 hover:text-white"
+        >
+          ↓
+        </a>
       </section>
 
       {/* ── Content ── */}
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+      <main id="main-content" className="mx-auto w-full max-w-6xl px-6 py-10">
 
         {/* ── Stats row — returning users only ── */}
         {jobs.length > 0 && (
